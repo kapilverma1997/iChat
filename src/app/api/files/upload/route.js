@@ -3,12 +3,19 @@ import connectDB from '../../../../../lib/mongodb.js';
 import { getAuthenticatedUser } from '../../../../../lib/auth.js';
 import Chat from '../../../../../models/Chat.js';
 import Group from '../../../../../models/Group.js';
-import File from '../../../../../models/File.js';
+import FileModel from '../../../../../models/File.js';
 import Message from '../../../../../models/Message.js';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
-import sharp from 'sharp';
+
+// Optional sharp import for image processing
+let sharp;
+try {
+  sharp = (await import('sharp')).default;
+} catch (e) {
+  console.warn('Sharp not installed, image processing will be limited');
+}
 
 export async function POST(request) {
   try {
@@ -86,31 +93,36 @@ export async function POST(request) {
     let width, height;
 
     if (file.type.startsWith('image/')) {
-      try {
-        const image = sharp(buffer);
-        const metadata = await image.metadata();
-        width = metadata.width;
-        height = metadata.height;
+      if (sharp) {
+        try {
+          const image = sharp(buffer);
+          const metadata = await image.metadata();
+          width = metadata.width;
+          height = metadata.height;
 
-        if (compress) {
-          buffer = await image
-            .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
-            .jpeg({ quality: 85 })
+          if (compress) {
+            buffer = await image
+              .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
+              .jpeg({ quality: 85 })
+              .toBuffer();
+          }
+
+          // Generate thumbnail
+          const thumbnailBuffer = await image
+            .resize(200, 200, { fit: 'cover' })
+            .jpeg({ quality: 80 })
             .toBuffer();
+
+          const thumbnailFileName = `thumb-${timestamp}-${originalFileName.replace(/\.[^/.]+$/, '.jpg')}`;
+          const thumbnailPath = join(uploadsDir, thumbnailFileName);
+          await writeFile(thumbnailPath, thumbnailBuffer);
+          thumbnail = `/uploads/${thumbnailFileName}`;
+        } catch (error) {
+          console.error('Error processing image:', error);
         }
-
-        // Generate thumbnail
-        const thumbnailBuffer = await image
-          .resize(200, 200, { fit: 'cover' })
-          .jpeg({ quality: 80 })
-          .toBuffer();
-
-        const thumbnailFileName = `thumb-${timestamp}-${originalFileName.replace(/\.[^/.]+$/, '.jpg')}`;
-        const thumbnailPath = join(uploadsDir, thumbnailFileName);
-        await writeFile(thumbnailPath, thumbnailBuffer);
-        thumbnail = `/uploads/${thumbnailFileName}`;
-      } catch (error) {
-        console.error('Error processing image:', error);
+      } else {
+        // Without sharp, just use the original image
+        thumbnail = fileUrl; // Use full image as thumbnail fallback
       }
     } else if (file.type.startsWith('video/')) {
       // For videos, we'd need ffmpeg to generate thumbnails
@@ -134,7 +146,7 @@ export async function POST(request) {
     }
 
     // Create file record
-    const fileRecord = await File.create({
+    const fileRecord = await FileModel.create({
       url: fileUrl,
       thumbnail,
       metadata: {

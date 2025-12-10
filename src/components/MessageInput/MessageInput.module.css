@@ -37,6 +37,13 @@
   color: white;
 }
 
+.divider {
+  width: 1px;
+  height: 20px;
+  background-color: #d1d5db;
+  margin: 0 4px;
+}
+
 .filePreviews {
   display: flex;
   flex-direction: column;

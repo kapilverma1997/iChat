@@ -1,0 +1,74 @@
+.quotePreview {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-left: 3px solid #007bff;
+  border-radius: 4px;
+  position: relative;
+}
+
+.quoteBar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: #007bff;
+  border-radius: 2px 0 0 2px;
+}
+
+.quoteContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.quoteHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.quoteAuthor {
+  font-weight: 600;
+  font-size: 13px;
+  color: #007bff;
+}
+
+.quoteTime {
+  font-size: 11px;
+  color: #999;
+  margin-left: auto;
+}
+
+.quoteText {
+  font-size: 13px;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 8px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.closeButton:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+

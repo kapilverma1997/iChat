@@ -9,7 +9,9 @@
     "start": "NODE_ENV=production node server.js",
     "lint": "eslint",
     "seed": "node scripts/seed.js",
-    "seed:groups": "node scripts/seedGroups.js"
+    "seed:groups": "node scripts/seedGroups.js",
+    "seed:advanced": "node scripts/seedAdvancedFeatures.js",
+    "seed:cronJobs": "node scripts/cronJobs.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

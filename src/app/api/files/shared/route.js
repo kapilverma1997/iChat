@@ -4,6 +4,7 @@ import { getAuthenticatedUser } from '../../../../../lib/auth.js';
 import Chat from '../../../../../models/Chat.js';
 import Group from '../../../../../models/Group.js';
 import FileModel from '../../../../../models/File.js';
+import Message from '../../../../../models/Message.js';
 
 export async function GET(request) {
   try {
@@ -17,11 +18,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const chatId = searchParams.get('chatId');
     const groupId = searchParams.get('groupId');
-    const fileType = searchParams.get('type'); // image, video, document, audio
-    const query = searchParams.get('query'); // Search in file names
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '50', 10);
-    const skip = (page - 1) * limit;
+    const category = searchParams.get('category'); // images, videos, documents, links, audio
 
     if (!chatId && !groupId) {
       return NextResponse.json(
@@ -59,9 +56,8 @@ export async function GET(request) {
       }
     }
 
-    // Build query
+    // Get files from messages
     const fileQuery = {
-      isDeleted: false,
       $or: [
         { expiresAt: null },
         { expiresAt: { $gt: new Date() } },
@@ -74,34 +70,73 @@ export async function GET(request) {
       fileQuery.groupId = groupId;
     }
 
-    if (fileType) {
-      fileQuery['metadata.type'] = fileType;
-    }
+    // Filter by category
+    if (category === 'images') {
+      fileQuery['metadata.type'] = 'image';
+    } else if (category === 'videos') {
+      fileQuery['metadata.type'] = 'video';
+    } else if (category === 'documents') {
+      fileQuery['metadata.type'] = 'document';
+    } else if (category === 'audio') {
+      fileQuery['metadata.type'] = 'audio';
+    } else if (category === 'links') {
+      // Links are stored in messages, not files
+      const linkMessages = await Message.find({
+        chatId: chatId || null,
+        type: { $in: ['text', 'markdown'] },
+        content: { $regex: /https?:\/\//i },
+        isDeleted: false,
+        $or: [
+          { expiresAt: null },
+          { expiresAt: { $gt: new Date() } },
+        ],
+      })
+        .sort({ createdAt: -1 })
+        .populate('senderId', 'name email profilePhoto');
 
-    if (query) {
-      fileQuery['metadata.name'] = { $regex: query, $options: 'i' };
+      return NextResponse.json({
+        success: true,
+        links: linkMessages.map((msg) => ({
+          _id: msg._id,
+          content: msg.content,
+          senderId: msg.senderId,
+          createdAt: msg.createdAt,
+          url: msg.content.match(/https?:\/\/[^\s]+/i)?.[0] || '',
+        })),
+      });
     }
 
     const files = await FileModel.find(fileQuery)
       .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
       .populate('uploadedBy', 'name email profilePhoto');
 
-    const total = await FileModel.countDocuments(fileQuery);
+    // Group by type for better organization
+    const grouped = {
+      images: [],
+      videos: [],
+      documents: [],
+      audio: [],
+    };
+
+    files.forEach((file) => {
+      const type = file.metadata?.type || 'document';
+      if (type === 'image') {
+        grouped.images.push(file.toObject());
+      } else if (type === 'video') {
+        grouped.videos.push(file.toObject());
+      } else if (type === 'audio') {
+        grouped.audio.push(file.toObject());
+      } else {
+        grouped.documents.push(file.toObject());
+      }
+    });
 
     return NextResponse.json({
       success: true,
-      files: files.map((f) => f.toObject()),
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
+      files: category ? grouped[category] || [] : grouped,
     });
   } catch (error) {
-    console.error('File search error:', error);
+    console.error('Get shared media error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

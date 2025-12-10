@@ -134,6 +134,11 @@ export async function POST(request) {
           message: messageObj,
           chatId: chatId.toString(),
         });
+        io.to(`chat:${chatId}`).emit('message:mediaUploaded', {
+          message: messageObj,
+          file: fileRecord.toObject(),
+          chatId: chatId.toString(),
+        });
       }
     } catch (socketError) {
       console.error('Socket error:', socketError);

@@ -14,8 +14,19 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { chatId, content, type = 'text', fileUrl, fileName, fileSize, replyTo, metadata } =
-      await request.json();
+    const {
+      chatId,
+      content,
+      type = 'text',
+      fileUrl,
+      fileName,
+      fileSize,
+      replyTo,
+      quotedMessage,
+      priority = 'normal',
+      tags = [],
+      metadata,
+    } = await request.json();
 
     if (!chatId) {
       return NextResponse.json(
@@ -52,6 +63,9 @@ export async function POST(request) {
       fileName: fileName || '',
       fileSize: fileSize || 0,
       replyTo: replyTo || null,
+      quotedMessage: quotedMessage || null,
+      priority,
+      tags,
       metadata: metadata || {},
       deliveredAt: new Date(),
     });
@@ -76,6 +90,9 @@ export async function POST(request) {
     if (message.replyTo) {
       await message.populate('replyTo');
     }
+    if (message.quotedMessage) {
+      await message.populate('quotedMessage');
+    }
 
     // Emit socket event
     try {
@@ -91,10 +108,22 @@ export async function POST(request) {
             profilePhoto: messageObj.senderId.profilePhoto,
           };
         }
+        // Emit both old and new event names for compatibility
         io.to(`chat:${chatId}`).emit('receiveMessage', {
           message: messageObj,
           chatId: chatId.toString(),
         });
+        io.to(`chat:${chatId}`).emit('message:new', {
+          message: messageObj,
+          chatId: chatId.toString(),
+        });
+        if (quotedMessage) {
+          io.to(`chat:${chatId}`).emit('message:quote', {
+            messageId: message._id.toString(),
+            quotedMessageId: quotedMessage,
+            chatId: chatId.toString(),
+          });
+        }
         console.log(`Emitted message to chat:${chatId}`);
       } else {
         console.warn('Socket.io not available, message saved but not broadcasted');

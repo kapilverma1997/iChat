@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Avatar from "../Avatar/Avatar.jsx";
 import ReplyPreview from "../ReplyPreview/ReplyPreview.jsx";
+import QuotePreview from "../QuotePreview/QuotePreview.jsx";
+import PriorityLabel from "../PriorityLabel/PriorityLabel.jsx";
 import ReactionPicker from "../ReactionPicker/ReactionPicker.jsx";
 import ReactionList from "../ReactionList/ReactionList.jsx";
 import FilePreview from "../FilePreview/FilePreview.jsx";
 import LinkPreview from "../LinkPreview/LinkPreview.jsx";
+import MessageActionsMenu from "../MessageActionsMenu/MessageActionsMenu.jsx";
 import { parseMarkdown, extractUrls } from "../../lib/markdown.js";
 import styles from "./MessageItem.module.css";
 
@@ -19,12 +22,26 @@ export default function MessageItem({
   onStar,
   onPin,
   onDelete,
+  onDeleteForEveryone,
   onEdit,
+  onForward,
+  onQuote,
+  onSetPriority,
+  onAddTag,
+  onRemoveTag,
+  onSchedule,
+  onRemind,
+  onTranslate,
+  isSelected = false,
+  onSelect,
 }) {
   const [showReactions, setShowReactions] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
+  const menuRef = useRef(null);
+  const actionsRef = useRef(null);
 
   const formatTime = (date) => {
     return new Date(date).toLocaleTimeString("en-US", {
@@ -38,6 +55,55 @@ export default function MessageItem({
       await onEdit(message._id, editContent);
     }
     setIsEditing(false);
+  };
+
+  const handleMenuClick = (e) => {
+    e.stopPropagation();
+    const button = e.currentTarget;
+    const buttonRect = button.getBoundingClientRect();
+
+    // Use viewport coordinates for fixed positioning
+    const menuWidth = 200; // Approximate menu width
+    let x;
+    if (isOwn) {
+      // For own messages, align right edge of menu with right edge of button
+      x = buttonRect.right - menuWidth;
+    } else {
+      // For other messages, align left edge of menu with left edge of button
+      x = buttonRect.left;
+    }
+    const y = buttonRect.bottom + 4; // Below the button with small gap
+    setMenuPosition({ x, y, useFixed: true });
+    setShowMenu(!showMenu);
+  };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        showMenu &&
+        menuRef.current &&
+        actionsRef.current &&
+        !menuRef.current.contains(event.target) &&
+        !actionsRef.current.contains(event.target)
+      ) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [showMenu]);
+
+  const handleMessageClick = (e) => {
+    if (e.shiftKey || e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      onSelect?.(message._id);
+    }
   };
 
   const getReadStatus = () => {
@@ -227,8 +293,21 @@ export default function MessageItem({
     }
   };
 
+  // Check if message is deleted for this user
+  const isDeletedForMe =
+    message.deletedFor?.some(
+      (id) => id.toString() === currentUserId?.toString()
+    ) || false;
+  const isDeletedForEveryone = message.isDeletedForEveryone || false;
+  const showDeletedMessage = isDeletedForMe || isDeletedForEveryone;
+
   return (
-    <div className={`${styles.message} ${isOwn ? styles.own : ""}`}>
+    <div
+      className={`${styles.message} ${isOwn ? styles.own : ""} ${
+        isSelected ? styles.selected : ""
+      } ${showDeletedMessage ? styles.deleted : ""}`}
+      onClick={handleMessageClick}
+    >
       {!isOwn && (
         <Avatar
           src={message.senderId?.profilePhoto}
@@ -237,8 +316,28 @@ export default function MessageItem({
         />
       )}
       <div className={styles.content}>
+        {message.forwardedFrom && (
+          <div className={styles.forwardedLabel}>
+            ↪ Forwarded from {message.forwardedFrom.chatId ? "chat" : "group"}
+          </div>
+        )}
+        {message.quotedMessage && (
+          <QuotePreview quotedMessage={message.quotedMessage} />
+        )}
         {message.replyTo && (
           <ReplyPreview message={message.replyTo} onClose={() => {}} />
+        )}
+        {message.priority && message.priority !== "normal" && (
+          <PriorityLabel priority={message.priority} />
+        )}
+        {message.tags && message.tags.length > 0 && (
+          <div className={styles.tags}>
+            {message.tags.map((tag) => (
+              <span key={tag} className={styles.tag}>
+                {tag}
+              </span>
+            ))}
+          </div>
         )}
         {isEditing ? (
           <div className={styles.editContainer}>
@@ -275,6 +374,9 @@ export default function MessageItem({
               <span className={styles.time}>
                 {formatTime(message.createdAt)}
               </span>
+              {message.edited && (
+                <span className={styles.editedLabel}>(edited)</span>
+              )}
               {isOwn && (
                 <span className={styles.readStatus}>{getReadStatus()}</span>
               )}
@@ -282,71 +384,56 @@ export default function MessageItem({
           </>
         )}
       </div>
-      <div className={styles.actions}>
-        <button
-          className={styles.actionButton}
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowMenu(!showMenu);
-          }}
-        >
+      <div className={styles.actions} ref={actionsRef}>
+        <button className={styles.actionButton} onClick={handleMenuClick}>
           ⋮
         </button>
         {showMenu && (
-          <div className={styles.menu}>
-            <button
-              onClick={() => {
-                onReply(message);
+          <div ref={menuRef}>
+            <MessageActionsMenu
+              message={message}
+              isOwn={isOwn}
+              onEdit={(msg) => {
+                setIsEditing(true);
                 setShowMenu(false);
               }}
-            >
-              Reply
-            </button>
-            <button
-              onClick={() => {
-                setShowReactions(true);
-                setShowMenu(false);
+              onDelete={(msg, forEveryone) => {
+                if (forEveryone) {
+                  onDeleteForEveryone?.(msg);
+                } else {
+                  onDelete?.(msg, false);
+                }
               }}
-            >
-              React
-            </button>
-            {isOwn && (
-              <>
-                <button
-                  onClick={() => {
-                    onStar(message);
-                    setShowMenu(false);
-                  }}
-                >
-                  {message.isStarred ? "Unstar" : "Star"}
-                </button>
-                <button
-                  onClick={() => {
-                    onPin(message);
-                    setShowMenu(false);
-                  }}
-                >
-                  {message.isPinned ? "Unpin" : "Pin"}
-                </button>
-                <button
-                  onClick={() => {
-                    setIsEditing(true);
-                    setShowMenu(false);
-                  }}
-                >
-                  Edit
-                </button>
-                <button
-                  className={styles.delete}
-                  onClick={() => {
-                    onDelete(message);
-                    setShowMenu(false);
-                  }}
-                >
-                  Delete
-                </button>
-              </>
-            )}
+              onDeleteForEveryone={(msg) => {
+                onDeleteForEveryone?.(msg);
+              }}
+              onForward={(msg) => {
+                onForward?.(msg);
+              }}
+              onQuote={(msg) => {
+                onQuote?.(msg);
+              }}
+              onSetPriority={(messageId, priority) => {
+                onSetPriority?.(messageId, priority);
+              }}
+              onAddTag={(messageId, tag) => {
+                onAddTag?.(messageId, tag);
+              }}
+              onRemoveTag={(messageId, tag) => {
+                onRemoveTag?.(messageId, tag);
+              }}
+              onSchedule={(msg) => {
+                onSchedule?.(msg);
+              }}
+              onRemind={(msg) => {
+                onRemind?.(msg);
+              }}
+              onTranslate={(msg) => {
+                onTranslate?.(msg);
+              }}
+              position={menuPosition}
+              onClose={() => setShowMenu(false)}
+            />
           </div>
         )}
       </div>

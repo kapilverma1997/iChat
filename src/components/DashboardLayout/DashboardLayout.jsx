@@ -19,6 +19,7 @@ export default function DashboardLayout({
   onPinMessage,
   onDeleteMessage,
   onEditMessage,
+  onForwardMessage,
   onChatCreated,
   onChatUpdated,
   onChatDeleted,
@@ -53,6 +54,7 @@ export default function DashboardLayout({
               onPin={onPinMessage}
               onDelete={onDeleteMessage}
               onEdit={onEditMessage}
+              onForward={onForwardMessage}
               typingUsers={typingUsers}
             />
             <MessageInput

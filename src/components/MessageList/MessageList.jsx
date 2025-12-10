@@ -13,6 +13,7 @@ export default function MessageList({
   onPin,
   onDelete,
   onEdit,
+  onForward,
   typingUsers = [],
 }) {
   const messagesEndRef = useRef(null);
@@ -49,6 +50,7 @@ export default function MessageList({
           onPin={onPin}
           onDelete={onDelete}
           onEdit={onEdit}
+          onForward={onForward}
         />
       ))}
       {typingUsers.length > 0 && (

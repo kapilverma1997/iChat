@@ -12,6 +12,18 @@ const ReactionSchema = new Schema({
   },
 });
 
+const AttachmentSchema = new Schema({
+  fileId: {
+    type: Schema.Types.ObjectId,
+    ref: 'File',
+  },
+  url: String,
+  thumbnail: String,
+  type: String,
+  name: String,
+  size: Number,
+});
+
 const MessageSchema = new Schema(
   {
     chatId: {
@@ -69,6 +81,10 @@ const MessageSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'Message',
     },
+    quotedMessage: {
+      type: Schema.Types.ObjectId,
+      ref: 'Message',
+    },
     isStarred: {
       type: Boolean,
       default: false,
@@ -84,6 +100,59 @@ const MessageSchema = new Schema(
     deletedAt: {
       type: Date,
     },
+    deletedFor: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
+    isDeletedForEveryone: {
+      type: Boolean,
+      default: false,
+    },
+    edited: {
+      type: Boolean,
+      default: false,
+    },
+    editedAt: {
+      type: Date,
+    },
+    priority: {
+      type: String,
+      enum: ['normal', 'important', 'urgent'],
+      default: 'normal',
+    },
+    tags: [
+      {
+        type: String,
+        enum: ['important', 'todo', 'reminder'],
+      },
+    ],
+    scheduledAt: {
+      type: Date,
+    },
+    expiresAt: {
+      type: Date,
+    },
+    forwardedFrom: {
+      messageId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Message',
+      },
+      chatId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Chat',
+      },
+      groupId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Group',
+      },
+    },
+    translation: {
+      language: String,
+      content: String,
+    },
+    attachments: [AttachmentSchema],
     deliveredAt: {
       type: Date,
     },
@@ -111,6 +180,11 @@ MessageSchema.index({ senderId: 1 });
 MessageSchema.index({ isDeleted: 1 });
 MessageSchema.index({ isPinned: 1 });
 MessageSchema.index({ isStarred: 1 });
+MessageSchema.index({ priority: 1 });
+MessageSchema.index({ tags: 1 });
+MessageSchema.index({ scheduledAt: 1 });
+MessageSchema.index({ expiresAt: 1 });
+MessageSchema.index({ 'forwardedFrom.messageId': 1 });
 
 const Message = mongoose.models.Message || mongoose.model('Message', MessageSchema);
 

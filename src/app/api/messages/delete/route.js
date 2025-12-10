@@ -16,6 +16,7 @@ export async function DELETE(request) {
 
     const { searchParams } = new URL(request.url);
     const messageId = searchParams.get('messageId');
+    const deleteForEveryone = searchParams.get('deleteForEveryone') === 'true';
 
     if (!messageId) {
       return NextResponse.json({ error: 'Message ID is required' }, { status: 400 });
@@ -38,24 +39,57 @@ export async function DELETE(request) {
     }
 
     if (message.senderId.toString() !== user._id.toString()) {
-      return NextResponse.json({ error: 'Unauthorized to delete this message' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Unauthorized to delete this message' },
+        { status: 403 }
+      );
     }
 
-    // Soft delete message
-    message.isDeleted = true;
-    message.deletedAt = new Date();
-    message.content = 'This message was deleted';
-    await message.save();
+    if (deleteForEveryone) {
+      // Delete for everyone (WhatsApp-style)
+      message.isDeleted = true;
+      message.isDeletedForEveryone = true;
+      message.deletedAt = new Date();
+      message.content = 'This message was deleted';
+      message.fileUrl = '';
+      message.fileName = '';
+      await message.save();
 
-    // Emit socket event
-    try {
-      const io = getIO();
-      io.to(`chat:${message.chatId}`).emit('messageDeleted', {
-        messageId: message._id,
-        chatId: message.chatId,
-      });
-    } catch (socketError) {
-      console.error('Socket error:', socketError);
+      // Emit socket event for everyone
+      try {
+        const io = getIO();
+        if (io) {
+          io.to(`chat:${message.chatId}`).emit('message:deleteEveryone', {
+            messageId: message._id.toString(),
+            chatId: message.chatId.toString(),
+          });
+        }
+      } catch (socketError) {
+        console.error('Socket error:', socketError);
+      }
+    } else {
+      // Delete for me only
+      if (!message.deletedFor) {
+        message.deletedFor = [];
+      }
+      if (!message.deletedFor.includes(user._id)) {
+        message.deletedFor.push(user._id);
+      }
+      await message.save();
+
+      // Emit socket event only to the user
+      try {
+        const io = getIO();
+        if (io) {
+          io.to(`chat:${message.chatId}`).emit('message:deleteForMe', {
+            messageId: message._id.toString(),
+            chatId: message.chatId.toString(),
+            userId: user._id.toString(),
+          });
+        }
+      } catch (socketError) {
+        console.error('Socket error:', socketError);
+      }
     }
 
     return NextResponse.json({ message: 'Message deleted successfully' });

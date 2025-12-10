@@ -3,6 +3,15 @@
   gap: 8px;
   padding: 8px 16px;
   position: relative;
+  cursor: pointer;
+}
+
+.message.selected {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+.message.deleted {
+  opacity: 0.6;
 }
 
 .message.own {
@@ -81,6 +90,37 @@
   margin-top: 4px;
   font-size: 11px;
   color: #9ca3af;
+}
+
+.forwardedLabel {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-bottom: 4px;
+  font-style: italic;
+}
+
+.tags {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 6px;
+  background-color: #e3f2fd;
+  color: #1976d2;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.editedLabel {
+  font-size: 10px;
+  color: #9ca3af;
+  font-style: italic;
 }
 
 .message.own .meta {

@@ -6,6 +6,7 @@ import ProtectedLayout from "../../components/ProtectedLayout/ProtectedLayout.js
 import DashboardLayout from "../../components/DashboardLayout/DashboardLayout.jsx";
 import Navbar from "../../components/Navbar/Navbar.jsx";
 import ConfirmationDialog from "../../components/ConfirmationDialog/ConfirmationDialog.jsx";
+import ForwardMessageModal from "../../components/ForwardMessageModal/ForwardMessageModal.jsx";
 import { useSocket } from "../../hooks/useSocket.js";
 import { usePresence } from "../../hooks/usePresence.js";
 import styles from "./page.module.css";
@@ -20,6 +21,8 @@ export default function DashboardPage() {
   const [replyTo, setReplyTo] = useState(null);
   const [typingUsers, setTypingUsers] = useState([]);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [forwardMessage, setForwardMessage] = useState(null);
+  const [groups, setGroups] = useState([]);
   const { socket, connected } = useSocket();
   const typingTimeoutRef = useRef({});
 
@@ -32,6 +35,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user) {
       fetchChats();
+      fetchGroups();
     }
   }, [user]);
 
@@ -88,6 +92,24 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("Error fetching chats:", error);
+    }
+  };
+
+  const fetchGroups = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/groups/list?type=all", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setGroups(data.groups || []);
+      }
+    } catch (error) {
+      console.error("Error fetching groups:", error);
     }
   };
 
@@ -467,6 +489,39 @@ export default function DashboardPage() {
     }
   };
 
+  const handleForwardMessage = (message) => {
+    setForwardMessage(message);
+  };
+
+  const handleForward = async (message, targetChatId, targetGroupId) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/messages/forward", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          messageId: message._id,
+          targetChatId,
+          targetGroupId,
+        }),
+      });
+
+      if (response.ok) {
+        // Refresh chats to show updated last message
+        fetchChats();
+        fetchGroups();
+      } else {
+        const error = await response.json();
+        console.error("Error forwarding message:", error);
+      }
+    } catch (error) {
+      console.error("Error forwarding message:", error);
+    }
+  };
+
   const handleChatCreated = (chat) => {
     setChats((prev) => [chat, ...prev]);
     setActiveChat(chat);
@@ -530,6 +585,7 @@ export default function DashboardPage() {
         onPinMessage={handlePinMessage}
         onDeleteMessage={handleDeleteMessage}
         onEditMessage={handleEditMessage}
+        onForwardMessage={handleForwardMessage}
         onChatCreated={handleChatCreated}
         onChatUpdated={handleChatUpdated}
         onChatDeleted={handleChatDeleted}
@@ -548,6 +604,15 @@ export default function DashboardPage() {
           message="Are you sure you want to delete this message? This action cannot be undone."
           confirmText="Delete"
           variant="danger"
+        />
+      )}
+      {forwardMessage && (
+        <ForwardMessageModal
+          message={forwardMessage}
+          chats={chats.filter((chat) => chat._id !== activeChat?._id)}
+          groups={groups}
+          onForward={handleForward}
+          onClose={() => setForwardMessage(null)}
         />
       )}
     </ProtectedLayout>

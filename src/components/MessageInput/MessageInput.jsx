@@ -23,6 +23,7 @@ export default function MessageInput({
   const [isTyping, setIsTyping] = useState(false);
   const [isCodeMode, setIsCodeMode] = useState(false);
   const [isMarkdownMode, setIsMarkdownMode] = useState(false);
+  const [formattingMode, setFormattingMode] = useState(null); // 'bold', 'italic', 'underline'
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -203,6 +204,41 @@ export default function MessageInput({
     }
   };
 
+  const applyFormatting = (format) => {
+    const textarea = inputRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = content.substring(start, end);
+    let formattedText = "";
+
+    switch (format) {
+      case "bold":
+        formattedText = `**${selectedText || "text"}**`;
+        break;
+      case "italic":
+        formattedText = `*${selectedText || "text"}*`;
+        break;
+      case "underline":
+        formattedText = `__${selectedText || "text"}__`;
+        break;
+      default:
+        formattedText = selectedText;
+    }
+
+    const newContent =
+      content.substring(0, start) + formattedText + content.substring(end);
+    setContent(newContent);
+
+    // Set cursor position after formatted text
+    setTimeout(() => {
+      textarea.focus();
+      const newPosition = start + formattedText.length;
+      textarea.setSelectionRange(newPosition, newPosition);
+    }, 0);
+  };
+
   return (
     <div className={styles.container}>
       {replyTo && <ReplyPreview message={replyTo} onClose={onCancelReply} />}
@@ -305,6 +341,43 @@ export default function MessageInput({
             title="Markdown"
           >
             M↓
+          </button>
+          <div className={styles.divider}></div>
+          <button
+            className={`${styles.toolbarButton} ${
+              formattingMode === "bold" ? styles.active : ""
+            }`}
+            onClick={() => {
+              applyFormatting("bold");
+              setFormattingMode("bold");
+            }}
+            title="Bold"
+          >
+            <strong>B</strong>
+          </button>
+          <button
+            className={`${styles.toolbarButton} ${
+              formattingMode === "italic" ? styles.active : ""
+            }`}
+            onClick={() => {
+              applyFormatting("italic");
+              setFormattingMode("italic");
+            }}
+            title="Italic"
+          >
+            <em>I</em>
+          </button>
+          <button
+            className={`${styles.toolbarButton} ${
+              formattingMode === "underline" ? styles.active : ""
+            }`}
+            onClick={() => {
+              applyFormatting("underline");
+              setFormattingMode("underline");
+            }}
+            title="Underline"
+          >
+            <u>U</u>
           </button>
         </div>
 
