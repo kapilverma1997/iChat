@@ -1,0 +1,182 @@
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-bottom: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.item:hover {
+  background: #f9fafb;
+}
+
+.item.active {
+  background: #eff6ff;
+  border-left: 3px solid #667eea;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.name {
+  font-weight: 600;
+  font-size: 15px;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.time {
+  font-size: 12px;
+  color: #6b7280;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.lastMessage {
+  font-size: 13px;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.unreadBadge {
+  background: #667eea;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.menu {
+  position: relative;
+}
+
+.menuButton {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.menuButton:hover {
+  background: #e5e7eb;
+}
+
+.menuDropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  min-width: 150px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.menuDropdown button {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  text-align: left;
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #1f2937;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.menuDropdown button:hover {
+  background: #f3f4f6;
+}
+
+.menuDropdown .delete {
+  color: #ef4444;
+}
+
+.menuDropdown .delete:hover {
+  background: #fee2e2;
+}
+
+@media (prefers-color-scheme: dark) {
+  .item {
+    border-bottom-color: #374151;
+  }
+
+  .item:hover {
+    background: #374151;
+  }
+
+  .item.active {
+    background: #1e3a8a;
+  }
+
+  .name {
+    color: #f9fafb;
+  }
+
+  .time {
+    color: #9ca3af;
+  }
+
+  .lastMessage {
+    color: #9ca3af;
+  }
+
+  .menuButton {
+    color: #9ca3af;
+  }
+
+  .menuButton:hover {
+    background: #4b5563;
+  }
+
+  .menuDropdown {
+    background: #1f2937;
+  }
+
+  .menuDropdown button {
+    color: #f9fafb;
+  }
+
+  .menuDropdown button:hover {
+    background: #374151;
+  }
+
+  .menuDropdown .delete:hover {
+    background: #7f1d1d;
+  }
+}

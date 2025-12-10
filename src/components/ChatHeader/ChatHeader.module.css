@@ -1,0 +1,40 @@
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: white;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-weight: 600;
+  font-size: 16px;
+  color: #1f2937;
+  margin-bottom: 2px;
+}
+
+.status {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+@media (prefers-color-scheme: dark) {
+  .header {
+    background: #1f2937;
+    border-bottom-color: #374151;
+  }
+
+  .name {
+    color: #f9fafb;
+  }
+
+  .status {
+    color: #9ca3af;
+  }
+}

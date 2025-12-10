@@ -1,0 +1,88 @@
+.themeSelector {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.themeOptions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.themeOption {
+  flex: 1;
+  min-width: 100px;
+  padding: 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.themeOption:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.themeOption.active {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.icon {
+  font-size: 24px;
+}
+
+.themeOption .label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin: 0;
+}
+
+.themeOption.active .label {
+  color: #667eea;
+}
+
+@media (prefers-color-scheme: dark) {
+  .label {
+    color: #f9fafb;
+  }
+
+  .themeOption {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .themeOption:hover {
+    border-color: #667eea;
+  }
+
+  .themeOption.active {
+    background: #1e293b;
+    border-color: #667eea;
+  }
+
+  .themeOption .label {
+    color: #f9fafb;
+  }
+
+  .themeOption.active .label {
+    color: #667eea;
+  }
+}
+

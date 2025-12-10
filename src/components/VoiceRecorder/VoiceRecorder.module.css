@@ -1,0 +1,117 @@
+.container {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  margin: 8px 0;
+}
+
+.controls,
+.recording,
+.preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.recordButton,
+.stopButton,
+.sendButton,
+.cancelButton {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.recordButton {
+  background: #ef4444;
+  color: white;
+}
+
+.recordButton:hover {
+  background: #dc2626;
+}
+
+.stopButton {
+  background: #ef4444;
+  color: white;
+}
+
+.stopButton:hover {
+  background: #dc2626;
+}
+
+.sendButton {
+  background: #10b981;
+  color: white;
+}
+
+.sendButton:hover {
+  background: #059669;
+}
+
+.cancelButton {
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+}
+
+.cancelButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.recording {
+  flex-direction: column;
+  align-items: center;
+}
+
+.recordingIndicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #ef4444;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  background: #ef4444;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.time {
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.audioPlayer {
+  flex: 1;
+  min-width: 200px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .container {
+    background: rgba(255, 255, 255, 0.03);
+  }
+}

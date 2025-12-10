@@ -1,0 +1,80 @@
+.avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  border-radius: 50%;
+}
+
+.initials {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+  border-radius: 50%;
+}
+
+.small {
+  width: 32px;
+  height: 32px;
+  font-size: 12px;
+}
+
+.medium {
+  width: 48px;
+  height: 48px;
+  font-size: 16px;
+}
+
+.large {
+  width: 64px;
+  height: 64px;
+  font-size: 20px;
+}
+
+.status {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.online {
+  background: #10b981;
+}
+
+.offline {
+  background: #9ca3af;
+}
+
+.away {
+  background: #f59e0b;
+}
+
+.do-not-disturb {
+  background: #ef4444;
+}
+
+@media (prefers-color-scheme: dark) {
+  .status {
+    border-color: #1f2937;
+  }
+}

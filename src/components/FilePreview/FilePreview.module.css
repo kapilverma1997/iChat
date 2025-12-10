@@ -1,0 +1,97 @@
+.filePreview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  margin: 8px 0;
+  position: relative;
+}
+
+.imagePreview,
+.videoPreview {
+  position: relative;
+  margin: 8px 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.image {
+  max-width: 100%;
+  max-height: 300px;
+  display: block;
+  border-radius: 8px;
+}
+
+.video {
+  max-width: 100%;
+  max-height: 300px;
+  display: block;
+  border-radius: 8px;
+}
+
+.fileIcon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.fileInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.fileName {
+  font-size: 14px;
+  font-weight: 500;
+  color: inherit;
+  word-break: break-word;
+  margin-bottom: 4px;
+}
+
+.fileSize {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.removeButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  transition: background 0.2s;
+}
+
+.removeButton:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .filePreview {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .fileSize {
+    color: rgba(255, 255, 255, 0.5);
+  }
+}

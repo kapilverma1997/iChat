@@ -1,0 +1,164 @@
+.container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.header {
+  position: absolute;
+  top: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  z-index: 1001;
+}
+
+.modeButton {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modeButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.closeButton {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.closeButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.camera {
+  width: 100%;
+  max-width: 640px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.video {
+  width: 100%;
+  max-height: 80vh;
+  border-radius: 8px;
+}
+
+.controls {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.captureButton,
+.recordButton,
+.stopButton {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 4px solid white;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.captureButton:hover,
+.recordButton:hover,
+.stopButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.recordButton {
+  background: #ef4444;
+}
+
+.stopButton {
+  background: #ef4444;
+}
+
+.preview {
+  max-width: 640px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.previewImage,
+.previewVideo {
+  max-width: 100%;
+  max-height: 60vh;
+  border-radius: 8px;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.sendButton,
+.retakeButton {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sendButton {
+  background: #10b981;
+  color: white;
+}
+
+.sendButton:hover {
+  background: #059669;
+}
+
+.retakeButton {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.retakeButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

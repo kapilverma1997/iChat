@@ -2,16 +2,29 @@
   "name": "ichat",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "node server.js",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "start": "NODE_ENV=production node server.js",
+    "lint": "eslint",
+    "seed": "node scripts/seed.js",
+    "seed:groups": "node scripts/seedGroups.js"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.2.3",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.0.0",
     "next": "16.0.7",
+    "next-auth": "^5.0.0-beta.30",
+    "nodemailer": "^7.0.11",
+    "qrcode": "^1.5.4",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "speakeasy": "^2.0.0"
   },
   "devDependencies": {
     "babel-plugin-react-compiler": "1.0.0",

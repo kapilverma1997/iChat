@@ -1,0 +1,33 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-primary, white);
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.loading,
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary, #666);
+  font-size: 0.875rem;
+}
+
+.typing {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #666);
+  font-style: italic;
+}
+

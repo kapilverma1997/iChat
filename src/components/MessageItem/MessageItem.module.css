@@ -1,0 +1,395 @@
+.message {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px;
+  position: relative;
+}
+
+.message.own {
+  flex-direction: row-reverse;
+}
+
+.content {
+  flex: 0 1 auto;
+  max-width: 70%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.bubble {
+  background: #f3f4f6;
+  padding: 10px 14px;
+  border-radius: 12px;
+  word-wrap: break-word;
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  width: fit-content;
+}
+
+.message.own .bubble {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1f2937;
+}
+
+.message.own .text {
+  color: white;
+}
+
+.image {
+  max-width: 100%;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.file {
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.reactions {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.reaction {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.message.own .reaction {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.message.own .meta {
+  justify-content: flex-end;
+}
+
+.readStatus {
+  color: #667eea;
+}
+
+.time {
+  color: #9ca3af;
+}
+
+.actions {
+  position: relative;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.message:hover .actions {
+  opacity: 1;
+}
+
+.actionButton {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 16px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.actionButton:hover {
+  background: #f3f4f6;
+}
+
+.menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  min-width: 120px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.message.own .menu {
+  right: auto;
+  left: 0;
+}
+
+.menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: #1f2937;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.menu button:hover {
+  background: #f3f4f6;
+}
+
+.menu .delete {
+  color: #ef4444;
+}
+
+.menu .delete:hover {
+  background: #fee2e2;
+}
+
+.editContainer {
+  background: #f3f4f6;
+  padding: 10px 14px;
+  border-radius: 12px;
+}
+
+.editInput {
+  width: 100%;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 14px;
+  outline: none;
+}
+
+.editInput:focus {
+  border-color: #667eea;
+}
+
+/* New message type styles */
+.emojiContent {
+  text-align: center;
+  padding: 8px;
+}
+
+.largeEmoji {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.audioMessage {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.audioPlayer {
+  width: 100%;
+  max-width: 300px;
+  height: 32px;
+}
+
+.locationMessage {
+  padding: 8px 0;
+}
+
+.locationLink {
+  color: inherit;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.locationCoords {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.contactMessage {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 8px 0;
+}
+
+.contactIcon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.contactInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contactName {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.contactPhone,
+.contactEmail {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.codeMessage {
+  position: relative;
+  margin: 8px 0;
+}
+
+.codeBlock {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0;
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.codeBlock code {
+  color: inherit;
+}
+
+.codeLanguage {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 10px;
+  opacity: 0.6;
+  text-transform: uppercase;
+}
+
+.markdownMessage {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.markdownContent {
+  line-height: 1.6;
+}
+
+.markdownContent strong {
+  font-weight: 600;
+}
+
+.markdownContent em {
+  font-style: italic;
+}
+
+.markdownContent code {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: "Courier New", monospace;
+  font-size: 0.9em;
+}
+
+.markdownContent pre {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.markdownContent pre code {
+  background: none;
+  padding: 0;
+}
+
+.markdownContent ul,
+.markdownContent ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.markdownContent li {
+  margin: 4px 0;
+}
+
+.markdownContent a {
+  color: inherit;
+  text-decoration: underline;
+  opacity: 0.9;
+}
+
+.markdownContent a:hover {
+  opacity: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  .bubble {
+    background: #374151;
+    color: #f9fafb;
+  }
+
+  .text {
+    color: #f9fafb;
+  }
+
+  .meta {
+    color: #6b7280;
+  }
+
+  .actionButton:hover {
+    background: #4b5563;
+  }
+
+  .menu {
+    background: #1f2937;
+  }
+
+  .menu button {
+    color: #f9fafb;
+  }
+
+  .menu button:hover {
+    background: #374151;
+  }
+
+  .editContainer {
+    background: #374151;
+  }
+
+  .editInput {
+    background: #4b5563;
+    border-color: #6b7280;
+    color: #f9fafb;
+  }
+
+  .codeBlock {
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  .markdownContent code {
+    background: rgba(0, 0, 0, 0.4);
+  }
+
+  .markdownContent pre {
+    background: rgba(0, 0, 0, 0.5);
+  }
+}

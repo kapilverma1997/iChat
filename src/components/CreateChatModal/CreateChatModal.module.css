@@ -1,0 +1,42 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.error {
+  padding: 12px;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+@media (prefers-color-scheme: dark) {
+  .field label {
+    color: #f9fafb;
+  }
+
+  .error {
+    background: #7f1d1d;
+    color: #fca5a5;
+  }
+}

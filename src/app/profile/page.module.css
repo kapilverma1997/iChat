@@ -1,0 +1,180 @@
+.profile {
+  min-height: 100vh;
+  background: #f9fafb;
+}
+
+.header {
+  background: white;
+  padding: 20px 40px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.backButton {
+  background: none;
+  border: none;
+  color: #667eea;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 0;
+}
+
+.backButton:hover {
+  text-decoration: underline;
+}
+
+.header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.error {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+.success {
+  background: #d1fae5;
+  color: #065f46;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+.section {
+  background: white;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 24px 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.disabled {
+  background: #f3f4f6;
+  cursor: not-allowed;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.checkbox:hover {
+  background: #f9fafb;
+}
+
+.checkbox input {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.checkbox span {
+  font-size: 14px;
+  color: #374151;
+}
+
+.languageField {
+  margin-top: 12px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-size: 18px;
+  color: #6b7280;
+}
+
+@media (prefers-color-scheme: dark) {
+  .profile {
+    background: #111827;
+  }
+
+  .header {
+    background: #1f2937;
+  }
+
+  .header h1 {
+    color: #f9fafb;
+  }
+
+  .section {
+    background: #1f2937;
+  }
+
+  .sectionTitle {
+    color: #f9fafb;
+  }
+
+  .field label {
+    color: #f9fafb;
+  }
+
+  .disabled {
+    background: #374151;
+  }
+
+  .checkbox:hover {
+    background: #374151;
+  }
+
+  .checkbox span {
+    color: #f9fafb;
+  }
+}
+
