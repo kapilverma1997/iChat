@@ -1,0 +1,70 @@
+.statusDurationMenu {
+  padding: 1rem;
+}
+
+.statusDurationMenu h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+}
+
+.description {
+  margin: 0 0 1rem 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.option:hover {
+  background: #f8f9fa;
+  border-color: var(--primary-color, #007bff);
+}
+
+.option input[type="radio"] {
+  cursor: pointer;
+}
+
+.customInput {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.numberInput {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.saveButton {
+  padding: 0.5rem 1rem;
+  background: var(--primary-color, #007bff);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.saveButton:hover {
+  opacity: 0.9;
+}
+

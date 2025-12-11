@@ -1,0 +1,81 @@
+.themeSwitcher {
+  padding: 1rem;
+}
+
+.themeSwitcher h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+}
+
+.themes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.themeOption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.themeOption:hover {
+  border-color: var(--primary-color, #007bff);
+}
+
+.themeOption.active {
+  border-color: var(--primary-color, #007bff);
+  background: #f0f8ff;
+}
+
+.themePreview {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+}
+
+.themeInfo {
+  text-align: center;
+  width: 100%;
+}
+
+.themeName {
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: block;
+}
+
+.previewActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  justify-content: center;
+}
+
+.applyButton,
+.cancelButton {
+  padding: 0.25rem 0.75rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.applyButton {
+  background: var(--primary-color, #007bff);
+  color: white;
+}
+
+.cancelButton {
+  background: #6c757d;
+  color: white;
+}
+

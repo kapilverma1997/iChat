@@ -1,0 +1,71 @@
+.backgroundPicker {
+  padding: 1rem;
+}
+
+.backgroundPicker h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+}
+
+.predefined,
+.upload {
+  margin-bottom: 1.5rem;
+}
+
+.predefined h4,
+.upload h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  color: #666;
+}
+
+.backgroundGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.75rem;
+}
+
+.backgroundOption {
+  aspect-ratio: 1;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.backgroundOption:hover {
+  border-color: var(--primary-color, #007bff);
+  transform: scale(1.05);
+}
+
+.backgroundOption.selected {
+  border-color: var(--primary-color, #007bff);
+  border-width: 3px;
+}
+
+.backgroundName {
+  font-size: 0.75rem;
+  color: #333;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.uploadButton {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: var(--primary-color, #007bff);
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.uploadButton:hover {
+  opacity: 0.9;
+}
+

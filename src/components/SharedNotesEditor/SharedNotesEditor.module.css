@@ -1,0 +1,83 @@
+.notesEditor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.titleInput {
+  flex: 1;
+  padding: 0.5rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.titleInput:focus {
+  outline: none;
+  border-bottom-color: var(--primary-color, #007bff);
+}
+
+.pinButton {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  opacity: 0.5;
+}
+
+.pinButton:hover {
+  opacity: 1;
+}
+
+.pinButton.pinned {
+  opacity: 1;
+}
+
+.saving {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.contentArea {
+  flex: 1;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: none;
+  min-height: 300px;
+}
+
+.contentArea:focus {
+  outline: none;
+  border-color: var(--primary-color, #007bff);
+}
+
+.versionInfo {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #666;
+  text-align: right;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
