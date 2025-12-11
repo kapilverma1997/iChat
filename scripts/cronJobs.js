@@ -19,6 +19,8 @@ import Group from '../models/Group.js';
 import MessageRetention from '../models/MessageRetention.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
+import AdminSettings from '../models/AdminSettings.js';
+import ArchivedChat from '../models/ArchivedChat.js';
 import { getIO } from '../lib/socket.js';
 import { unlink } from 'fs/promises';
 import { existsSync } from 'fs';
@@ -434,6 +436,57 @@ export async function processEmailDigests() {
   }
 }
 
+// Auto-archive inactive chats
+export async function processAutoArchive() {
+  try {
+    await connectDB();
+
+    const settings = await AdminSettings.findOne();
+    const archiveDays = settings?.autoArchiveDays || 30;
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - archiveDays);
+
+    // Find inactive chats (no messages in last X days)
+    const inactiveChats = await Chat.find({
+      lastMessageAt: { $lt: cutoffDate },
+      isArchived: false,
+    })
+      .populate('participants')
+      .lean();
+
+    for (const chat of inactiveChats) {
+      try {
+        // Check if already archived
+        const existingArchive = await ArchivedChat.findOne({ chatId: chat._id });
+        if (existingArchive) continue;
+
+        // Create archive record
+        await ArchivedChat.create({
+          chatId: chat._id,
+          archivedAt: new Date(),
+          archivedBy: chat.participants[0]?._id || null,
+          reason: 'Inactive',
+          lastActivityAt: chat.lastMessageAt || chat.createdAt,
+          canRestore: true,
+        });
+
+        // Mark chat as archived
+        await Chat.findByIdAndUpdate(chat._id, {
+          isArchived: true,
+        });
+
+        console.log(`Archived chat: ${chat._id}`);
+      } catch (error) {
+        console.error(`Error archiving chat ${chat._id}:`, error);
+      }
+    }
+
+    console.log(`Archived ${inactiveChats.length} inactive chats`);
+  } catch (error) {
+    console.error('Error processing auto-archive:', error);
+  }
+}
+
 // Run all cron jobs
 export async function runCronJobs() {
   await processScheduledMessages();
@@ -442,6 +495,7 @@ export async function runCronJobs() {
   await processReminders();
   await processMessageRetention();
   await processEmailDigests();
+  await processAutoArchive();
 }
 
 // Schedule cron jobs to run every minute

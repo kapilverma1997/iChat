@@ -1,9 +1,13 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Sidebar from "../Sidebar/Sidebar.jsx";
 import ChatHeader from "../ChatHeader/ChatHeader.jsx";
 import MessageList from "../MessageList/MessageList.jsx";
 import MessageInput from "../MessageInput/MessageInput.jsx";
+import NotificationBell from "../NotificationBell/NotificationBell.jsx";
+import NotificationCenter from "../NotificationCenter/NotificationCenter.jsx";
+import ChatLockScreen from "../ChatLockScreen/ChatLockScreen.jsx";
 import styles from "./DashboardLayout.module.css";
 
 export default function DashboardLayout({
@@ -29,7 +33,50 @@ export default function DashboardLayout({
   onTyping,
   onStopTyping,
 }) {
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [chatLockStatus, setChatLockStatus] = useState(null);
+  const [isLocked, setIsLocked] = useState(false);
   const otherUser = activeChat?.otherUser;
+
+  // Check chat lock status when activeChat changes
+  useEffect(() => {
+    if (activeChat) {
+      checkChatLock();
+    } else {
+      setIsLocked(false);
+      setChatLockStatus(null);
+    }
+  }, [activeChat]);
+
+  const checkChatLock = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(
+        `/api/security/lockChat?chatId=${activeChat?._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsLocked(data.isLocked);
+        setChatLockStatus(data);
+      }
+    } catch (error) {
+      console.error("Error checking chat lock:", error);
+    }
+  };
+
+  const handleUnlock = (dataKey) => {
+    setIsLocked(false);
+    // Store dataKey for decryption if needed
+    if (dataKey) {
+      sessionStorage.setItem(`chatKey_${activeChat?._id}`, dataKey);
+    }
+  };
 
   return (
     <div className={styles.layout}>
@@ -44,26 +91,41 @@ export default function DashboardLayout({
       <div className={styles.chatArea}>
         {activeChat ? (
           <>
-            <ChatHeader user={otherUser} chat={activeChat} />
-            <MessageList
-              messages={messages}
-              currentUserId={currentUserId}
-              onReply={onReplyMessage}
-              onReact={onReactMessage}
-              onStar={onStarMessage}
-              onPin={onPinMessage}
-              onDelete={onDeleteMessage}
-              onEdit={onEditMessage}
-              onForward={onForwardMessage}
-              typingUsers={typingUsers}
-            />
-            <MessageInput
-              onSend={onSendMessage}
-              replyTo={replyTo}
-              onCancelReply={() => setReplyTo(null)}
-              onTyping={onTyping}
-              onStopTyping={onStopTyping}
-            />
+            <div className={styles.chatHeaderWrapper}>
+              <ChatHeader user={otherUser} chat={activeChat} />
+              <div className={styles.headerActions}>
+                <NotificationBell onOpen={() => setShowNotifications(true)} />
+              </div>
+            </div>
+            {isLocked ? (
+              <ChatLockScreen
+                chatId={activeChat._id}
+                lockType={chatLockStatus?.lockType}
+                onUnlock={handleUnlock}
+              />
+            ) : (
+              <>
+                <MessageList
+                  messages={messages}
+                  currentUserId={currentUserId}
+                  onReply={onReplyMessage}
+                  onReact={onReactMessage}
+                  onStar={onStarMessage}
+                  onPin={onPinMessage}
+                  onDelete={onDeleteMessage}
+                  onEdit={onEditMessage}
+                  onForward={onForwardMessage}
+                  typingUsers={typingUsers}
+                />
+                <MessageInput
+                  onSend={onSendMessage}
+                  replyTo={replyTo}
+                  onCancelReply={() => setReplyTo(null)}
+                  onTyping={onTyping}
+                  onStopTyping={onStopTyping}
+                />
+              </>
+            )}
           </>
         ) : (
           <div className={styles.emptyStateContent}>
@@ -82,6 +144,10 @@ export default function DashboardLayout({
           </div>
         )}
       </div>
+      <NotificationCenter
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+      />
     </div>
   );
 }

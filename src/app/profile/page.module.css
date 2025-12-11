@@ -140,6 +140,37 @@
   color: #6b7280;
 }
 
+.tabs {
+  display: flex;
+  gap: 0;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 40px;
+}
+
+.tab {
+  padding: 16px 24px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.tab:hover {
+  color: #667eea;
+  background: #f9fafb;
+}
+
+.tab.activeTab {
+  color: #667eea;
+  border-bottom-color: #667eea;
+  background: #f9fafb;
+}
+
 @media (prefers-color-scheme: dark) {
   .profile {
     background: #111827;

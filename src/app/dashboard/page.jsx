@@ -7,6 +7,9 @@ import DashboardLayout from "../../components/DashboardLayout/DashboardLayout.js
 import Navbar from "../../components/Navbar/Navbar.jsx";
 import ConfirmationDialog from "../../components/ConfirmationDialog/ConfirmationDialog.jsx";
 import ForwardMessageModal from "../../components/ForwardMessageModal/ForwardMessageModal.jsx";
+import GlobalSearchModal from "../../components/GlobalSearchModal/GlobalSearchModal.jsx";
+import SuspiciousLoginAlert from "../../components/SuspiciousLoginAlert/SuspiciousLoginAlert.jsx";
+import PushPermissionPopup from "../../components/PushPermissionPopup/PushPermissionPopup.jsx";
 import { useSocket } from "../../hooks/useSocket.js";
 import { usePresence } from "../../hooks/usePresence.js";
 import styles from "./page.module.css";
@@ -23,6 +26,8 @@ export default function DashboardPage() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [forwardMessage, setForwardMessage] = useState(null);
   const [groups, setGroups] = useState([]);
+  const [showSearch, setShowSearch] = useState(false);
+  const [suspiciousLogin, setSuspiciousLogin] = useState(null);
   const { socket, connected } = useSocket();
   const typingTimeoutRef = useRef({});
 
@@ -30,6 +35,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchUser();
+    // Make search modal accessible globally
+    window.openSearchModal = () => setShowSearch(true);
+    return () => {
+      delete window.openSearchModal;
+    };
   }, []);
 
   useEffect(() => {
@@ -615,6 +625,17 @@ export default function DashboardPage() {
           onClose={() => setForwardMessage(null)}
         />
       )}
+      <GlobalSearchModal
+        isOpen={showSearch}
+        onClose={() => setShowSearch(false)}
+      />
+      {suspiciousLogin && (
+        <SuspiciousLoginAlert
+          sessionId={suspiciousLogin.sessionId}
+          onDismiss={() => setSuspiciousLogin(null)}
+        />
+      )}
+      <PushPermissionPopup />
     </ProtectedLayout>
   );
 }

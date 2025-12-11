@@ -5,6 +5,7 @@ This document provides a comprehensive overview of all implemented features for 
 ## 🟦 8. SECURITY & PRIVACY
 
 ### End-to-End Encryption (E2EE)
+
 - **Location**: `lib/encryption.js`, `src/app/api/security/e2ee/route.js`
 - **Features**:
   - RSA key pairs for each user (2048-bit)
@@ -16,6 +17,7 @@ This document provides a comprehensive overview of all implemented features for 
 - **Components**: `E2EEKeyManager.jsx`
 
 ### Encrypted Database At Rest
+
 - **Location**: `lib/encryption.js`
 - **Features**:
   - Field-level AES-256 encryption
@@ -23,6 +25,7 @@ This document provides a comprehensive overview of all implemented features for 
   - Automatic encryption/decryption utilities
 
 ### IP Whitelisting
+
 - **Location**: `src/app/api/admin/whitelist/route.js`
 - **Features**:
   - Admin panel accessible only from configured IPs
@@ -31,6 +34,7 @@ This document provides a comprehensive overview of all implemented features for 
 - **Model**: `IPWhitelist.js`
 
 ### Suspicious Login Detection
+
 - **Location**: `src/app/api/alerts/suspiciousLogin/route.js`
 - **Features**:
   - Detects new device, new IP, unusual activity time, unusual location
@@ -40,6 +44,7 @@ This document provides a comprehensive overview of all implemented features for 
 - **Component**: `SuspiciousLoginAlert.jsx`
 
 ### Message Retention Policies
+
 - **Location**: `src/app/api/settings/retention/route.js`, `scripts/cronJobs.js`
 - **Features**:
   - Per-chat retention: 24 hrs, 7 days, 30 days, Forever
@@ -47,6 +52,7 @@ This document provides a comprehensive overview of all implemented features for 
 - **Model**: `MessageRetention.js`
 
 ### Auto-Delete Messages
+
 - **Location**: `scripts/cronJobs.js` (processMessageExpiration)
 - **Features**:
   - Per-message expiration timestamp
@@ -54,6 +60,7 @@ This document provides a comprehensive overview of all implemented features for 
   - Notify receiver via Socket.io
 
 ### Secure File Storage
+
 - **Location**: `models/SecureFile.js`, `lib/encryption.js`
 - **Features**:
   - Encrypt files before uploading
@@ -62,12 +69,14 @@ This document provides a comprehensive overview of all implemented features for 
 - **Model**: `SecureFile.js`
 
 ### Screenshot Blocking
+
 - **Location**: `src/components/SecuritySettings/SecuritySettings.jsx`
 - **Features**:
   - Optional screenshot detection/blocking layer
   - User-configurable setting
 
 ### Watermark Messages
+
 - **Location**: `src/components/SecuritySettings/SecuritySettings.jsx`
 - **Features**:
   - Enable watermark with email, user ID, timestamp
@@ -75,6 +84,7 @@ This document provides a comprehensive overview of all implemented features for 
   - User-configurable setting
 
 ### Disable Forward/Copy
+
 - **Location**: `src/components/SecuritySettings/SecuritySettings.jsx`
 - **Features**:
   - Per-chat toggle for disable copy
@@ -82,6 +92,7 @@ This document provides a comprehensive overview of all implemented features for 
   - Disable download of media
 
 ### Private Chat Lock
+
 - **Location**: `src/app/api/security/lockChat/route.js`, `src/components/ChatLockScreen/ChatLockScreen.jsx`
 - **Features**:
   - PIN unlock
@@ -92,6 +103,7 @@ This document provides a comprehensive overview of all implemented features for 
 - **Component**: `ChatLockScreen.jsx`
 
 ### Two-step Verification
+
 - **Location**: `src/app/api/security/verify2FA/route.js`, `src/components/TwoFactorModal/TwoFactorModal.jsx`
 - **Features**:
   - Email or SMS code
@@ -100,6 +112,7 @@ This document provides a comprehensive overview of all implemented features for 
 - **Component**: `TwoFactorModal.jsx`
 
 ### Role-Based Permissions
+
 - **Location**: `lib/groupPermissions.js` (existing, enhanced)
 - **Features**:
   - Roles: Owner, Admin, Moderator, Member, Read-only user
@@ -109,6 +122,7 @@ This document provides a comprehensive overview of all implemented features for 
 ## 🟦 9. NOTIFICATIONS
 
 ### Push Notifications
+
 - **Location**: `src/app/api/notifications/push/route.js`, `lib/notifications.js`
 - **Features**:
   - Mobile push (Web Push API)
@@ -117,6 +131,7 @@ This document provides a comprehensive overview of all implemented features for 
 - **Component**: `PushPermissionPopup.jsx`
 
 ### In-App Notifications
+
 - **Location**: `src/app/api/notifications/list/route.js`, `lib/notifications.js`
 - **Features**:
   - Top-right notifications center
@@ -124,6 +139,7 @@ This document provides a comprehensive overview of all implemented features for 
 - **Components**: `NotificationBell.jsx`, `NotificationCenter.jsx`
 
 ### Email Notifications
+
 - **Location**: `src/app/api/notifications/email/route.js`, `lib/notifications.js`
 - **Features**:
   - Missed messages summary every X minutes
@@ -131,22 +147,26 @@ This document provides a comprehensive overview of all implemented features for 
 - **Cron Job**: `processEmailDigests()` in `scripts/cronJobs.js`
 
 ### Notification Categories
+
 - **Location**: `models/User.js` (notificationPreferences)
 - **Features**:
   - Mentions, Direct messages, Replies, File uploads, System/admin alerts, Group invites
   - User can enable/disable each category
 
 ### Mute Chat
+
 - **Location**: Existing in Chat/Group models
 - **Features**:
   - Options: 1 hour, 8 hours, 1 week, Forever
 
 ### Custom Notification Sound
+
 - **Location**: `models/User.js` (notificationPreferences.customSound)
 - **Features**:
   - User can upload or choose notification sounds
 
 ### Snooze Notifications
+
 - **Location**: Can be implemented in notification preferences
 - **Features**:
   - Snooze all alerts for: 30 min, 1 hour, Until tomorrow, Custom
@@ -154,12 +174,14 @@ This document provides a comprehensive overview of all implemented features for 
 ## 🟦 10. SEARCH FEATURES
 
 ### Search By
+
 - **Location**: `src/app/api/messages/search/route.js`, `src/app/api/files/search/route.js`
 - **Features**:
   - Keyword, Sender, Date range, File type, Messages
   - Content inside files (OCR/text extraction support)
 
 ### Global Search
+
 - **Location**: `src/app/api/messages/search/route.js`
 - **Features**:
   - Search all chats, groups, users
@@ -167,18 +189,21 @@ This document provides a comprehensive overview of all implemented features for 
 - **Component**: `GlobalSearchModal.jsx`
 
 ### Advanced Filters
+
 - **Location**: `src/app/api/messages/search/route.js`
 - **Features**:
   - Only images, Only documents, Only videos, Only links, Only starred messages
 - **Component**: `AdvancedSearchPanel.jsx`
 
 ### Search Inside a Specific Chat
+
 - **Location**: `src/app/api/messages/search/route.js`
 - **Features**:
   - Local chat-only search
   - Chat-level filters
 
 ### Saved Searches
+
 - **Location**: `src/app/api/search/saved/route.js`
 - **Features**:
   - Save user's search queries
@@ -190,6 +215,7 @@ This document provides a comprehensive overview of all implemented features for 
 ## 📁 File Structure
 
 ### Backend APIs
+
 ```
 src/app/api/
 ├── security/
@@ -215,6 +241,7 @@ src/app/api/
 ```
 
 ### Models
+
 ```
 models/
 ├── EncryptedMessage.js            # E2EE messages
@@ -228,6 +255,7 @@ models/
 ```
 
 ### Frontend Components
+
 ```
 src/components/
 ├── SecuritySettings/               # Security settings UI
@@ -244,6 +272,7 @@ src/components/
 ```
 
 ### Utilities
+
 ```
 lib/
 ├── encryption.js                    # Encryption utilities (RSA/AES)
@@ -251,6 +280,7 @@ lib/
 ```
 
 ### Cron Jobs
+
 ```
 scripts/cronJobs.js
 ├── processMessageExpiration()      # Auto-delete expired messages
@@ -261,6 +291,7 @@ scripts/cronJobs.js
 ## 🔌 Socket.io Events
 
 ### Security Events
+
 - `message:newEncrypted` - New encrypted message
 - `message:deletedByPolicy` - Message deleted by retention policy
 - `message:expired` - Message expired
@@ -270,6 +301,7 @@ scripts/cronJobs.js
 - `security:suspiciousLogin` - Suspicious login detected
 
 ### Notification Events
+
 - `notification:new` - New notification
 - `notification:read` - Notification marked as read
 
@@ -290,14 +322,17 @@ ENCRYPTION_KEY=your_encryption_key_here
 ## 🚀 Setup Instructions
 
 1. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 2. **Generate VAPID keys for push notifications**:
+
    ```bash
    npx web-push generate-vapid-keys
    ```
+
    Add the keys to `.env.local`
 
 3. **Run database migrations** (models will be created automatically on first use)
@@ -320,6 +355,7 @@ ENCRYPTION_KEY=your_encryption_key_here
 ## ✅ Completed Features
 
 All requested features have been implemented:
+
 - ✅ End-to-End Encryption
 - ✅ Encrypted Database At Rest
 - ✅ IP Whitelisting
@@ -347,4 +383,3 @@ All requested features have been implemented:
 - ✅ Saved Searches
 
 All backend APIs, frontend components, MongoDB models, encryption utilities, Socket.io events, and cron jobs have been created and are ready to use!
-

@@ -150,9 +150,23 @@ export default function Sidebar({
       <div className={styles.header}>
         {!isCollapsed && <h2>Chats</h2>}
         {!isCollapsed && (
-          <Button size="small" onClick={() => setShowCreateModal(true)}>
-            New Chat
-          </Button>
+          <div className={styles.headerActions}>
+            <button
+              className={styles.searchButton}
+              onClick={() => {
+                // Trigger search modal - pass via prop or use event
+                if (window.openSearchModal) {
+                  window.openSearchModal();
+                }
+              }}
+              title="Search"
+            >
+              🔍
+            </button>
+            <Button size="small" onClick={() => setShowCreateModal(true)}>
+              New Chat
+            </Button>
+          </div>
         )}
         {isCollapsed && (
           <Button 

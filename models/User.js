@@ -191,6 +191,47 @@ const UserSchema = new Schema(
         default: false,
       },
     },
+    // User role for RBAC
+    role: {
+      type: String,
+      enum: ['owner', 'admin', 'moderator', 'employee', 'guest', 'read-only'],
+      default: 'employee',
+    },
+    // Chat restrictions (set by admin)
+    chatRestrictions: {
+      disabled: {
+        type: Boolean,
+        default: false,
+      },
+      disableSending: {
+        type: Boolean,
+        default: false,
+      },
+      disableCalling: {
+        type: Boolean,
+        default: false,
+      },
+      disableFileUpload: {
+        type: Boolean,
+        default: false,
+      },
+      disableGroupCreation: {
+        type: Boolean,
+        default: false,
+      },
+      disabledAt: {
+        type: Date,
+      },
+      disabledBy: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    },
+    // User active status
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,

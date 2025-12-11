@@ -10,6 +10,9 @@ import StatusBadge from "../../components/StatusBadge/StatusBadge.jsx";
 import Dropdown from "../../components/Dropdown/Dropdown.jsx";
 import ThemeSelector from "../../components/ThemeSelector/ThemeSelector.jsx";
 import LanguageSelector from "../../components/LanguageSelector/LanguageSelector.jsx";
+import SecuritySettings from "../../components/SecuritySettings/SecuritySettings.jsx";
+import E2EEKeyManager from "../../components/E2EEKeyManager/E2EEKeyManager.jsx";
+import TwoFactorModal from "../../components/TwoFactorModal/TwoFactorModal.jsx";
 import styles from "./page.module.css";
 
 export default function ProfilePage() {
@@ -19,6 +22,8 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [activeTab, setActiveTab] = useState("profile");
+  const [show2FAModal, setShow2FAModal] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -266,6 +271,12 @@ export default function ProfilePage() {
     { value: "do-not-disturb", label: "Do Not Disturb" },
   ];
 
+  const tabs = [
+    { id: "profile", label: "Profile" },
+    { id: "security", label: "Security" },
+    { id: "encryption", label: "Encryption" },
+  ];
+
   return (
     <ProtectedLayout>
       <div className={styles.profile}>
@@ -276,11 +287,25 @@ export default function ProfilePage() {
           <h1>Profile Settings</h1>
         </header>
 
+        <div className={styles.tabs}>
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              className={`${styles.tab} ${activeTab === tab.id ? styles.activeTab : ""}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         <main className={styles.main}>
           {error && <div className={styles.error}>{error}</div>}
           {success && <div className={styles.success}>{success}</div>}
 
-          <div className={styles.section}>
+          {activeTab === "profile" && (
+            <>
+              <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Profile Photo</h2>
             <AvatarUploader
               currentPhoto={user?.profilePhoto}
@@ -472,13 +497,49 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className={styles.actions}>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
+              <div className={styles.actions}>
+                <Button onClick={handleSave} disabled={saving}>
+                  {saving ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+            </>
+          )}
+
+          {activeTab === "security" && (
+            <>
+              <SecuritySettings userId={user?._id} />
+              <div className={styles.section}>
+                <h2 className={styles.sectionTitle}>Two-Step Verification</h2>
+                <div className={styles.form}>
+                  <p>
+                    {user?.twoFactorEnabled
+                      ? "2FA is enabled for your account"
+                      : "Add an extra layer of security to your account"}
+                  </p>
+                  <Button
+                    onClick={() => setShow2FAModal(true)}
+                    variant={user?.twoFactorEnabled ? "outline" : "primary"}
+                  >
+                    {user?.twoFactorEnabled ? "Manage 2FA" : "Enable 2FA"}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === "encryption" && (
+            <E2EEKeyManager userId={user?._id} />
+          )}
         </main>
       </div>
+      <TwoFactorModal
+        isOpen={show2FAModal}
+        onClose={() => setShow2FAModal(false)}
+        onSuccess={() => {
+          setShow2FAModal(false);
+          fetchUser();
+        }}
+      />
     </ProtectedLayout>
   );
 }

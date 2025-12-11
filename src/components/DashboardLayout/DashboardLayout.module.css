@@ -75,3 +75,18 @@
   font-size: 14px;
   margin: 0;
 }
+
+.chatHeaderWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: white;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

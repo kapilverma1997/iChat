@@ -1,0 +1,101 @@
+.page {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 30px 0;
+  color: #1f2937;
+}
+
+.section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 20px 0;
+  color: #374151;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field label {
+  font-weight: 500;
+  color: #374151;
+}
+
+.archivedList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.archivedItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.archivedInfo {
+  flex: 1;
+}
+
+.archivedTitle {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.archivedMeta {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.restoreButton {
+  padding: 8px 16px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.restoreButton:hover {
+  background: #5568d3;
+}
+
+.empty {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+

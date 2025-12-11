@@ -49,6 +49,26 @@
   color: #1f2937;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.searchButton {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.searchButton:hover {
+  background: #f3f4f6;
+}
+
 .expandButton {
   width: 100%;
   justify-content: center;

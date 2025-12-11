@@ -1,0 +1,18 @@
+.page {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 30px 0;
+  color: #1f2937;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+

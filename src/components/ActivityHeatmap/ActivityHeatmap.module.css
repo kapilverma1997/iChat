@@ -1,0 +1,84 @@
+.heatmap {
+  padding: 20px 0;
+}
+
+.days {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.cell {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: transform 0.2s;
+}
+
+.cell:hover {
+  transform: scale(1.1);
+}
+
+.intensity0 {
+  background: #f3f4f6;
+}
+
+.intensity1 {
+  background: #dbeafe;
+}
+
+.intensity2 {
+  background: #93c5fd;
+}
+
+.intensity3 {
+  background: #60a5fa;
+}
+
+.intensity4 {
+  background: #3b82f6;
+}
+
+.count {
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.dateLabel {
+  font-size: 11px;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.legendCells {
+  display: flex;
+  gap: 4px;
+}
+
+.legendCell {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
