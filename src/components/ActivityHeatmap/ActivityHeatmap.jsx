@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import styles from './ActivityHeatmap.module.css';
+import styles from "./ActivityHeatmap.module.css";
 
 export default function ActivityHeatmap({ data = [] }) {
   // Create a map for quick lookup
@@ -14,7 +14,7 @@ export default function ActivityHeatmap({ data = [] }) {
   for (let i = 6; i >= 0; i--) {
     const date = new Date();
     date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = date.toISOString().split("T")[0];
     days.push({
       date: dateStr,
       count: dataMap[dateStr] || 0,
@@ -43,10 +43,14 @@ export default function ActivityHeatmap({ data = [] }) {
                 className={`${styles.cell} ${styles[`intensity${intensity}`]}`}
                 title={`${day.date}: ${day.count} logins`}
               >
-                {day.count > 0 && <span className={styles.count}>{day.count}</span>}
+                {day.count > 0 && (
+                  <span className={styles.count}>{day.count}</span>
+                )}
               </div>
               <div className={styles.dateLabel}>
-                {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}
+                {new Date(day.date).toLocaleDateString("en-US", {
+                  weekday: "short",
+                })}
               </div>
             </div>
           );
@@ -66,4 +70,3 @@ export default function ActivityHeatmap({ data = [] }) {
     </div>
   );
 }
-

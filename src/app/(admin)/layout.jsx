@@ -16,6 +16,7 @@ export default function AdminLayout({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    alert("(admin)/layout.");
     checkAdminAccess();
   }, []);
 
@@ -29,9 +30,10 @@ export default function AdminLayout({ children }) {
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
-        
+
         // Check if user is admin or owner
-        const admin = data.user?.role === "admin" || data.user?.role === "owner";
+        const admin =
+          data.user?.role === "admin" || data.user?.role === "owner";
         setIsAdminUser(admin);
 
         if (!admin) {
@@ -79,4 +81,3 @@ export default function AdminLayout({ children }) {
     </ProtectedLayout>
   );
 }
-

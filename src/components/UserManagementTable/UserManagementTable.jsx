@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import styles from './UserManagementTable.module.css';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import styles from "./UserManagementTable.module.css";
+import Image from "next/image";
 
 export default function UserManagementTable({ users, onRefresh }) {
   const router = useRouter();
@@ -13,15 +14,15 @@ export default function UserManagementTable({ users, onRefresh }) {
   };
 
   const handleDelete = async (userId) => {
-    if (!confirm('Are you sure you want to deactivate this user?')) {
+    if (!confirm("Are you sure you want to deactivate this user?")) {
       return;
     }
 
     setDeletingId(userId);
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       const response = await fetch(`/api/admin/users/${userId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -31,11 +32,11 @@ export default function UserManagementTable({ users, onRefresh }) {
         onRefresh?.();
       } else {
         const data = await response.json();
-        alert(data.error || 'Failed to delete user');
+        alert(data.error || "Failed to delete user");
       }
     } catch (error) {
-      console.error('Error deleting user:', error);
-      alert('Failed to delete user');
+      console.error("Error deleting user:", error);
+      alert("Failed to delete user");
     } finally {
       setDeletingId(null);
     }
@@ -43,11 +44,11 @@ export default function UserManagementTable({ users, onRefresh }) {
 
   const handleRoleChange = async (userId, newRole) => {
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/admin/roles', {
-        method: 'PATCH',
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/admin/roles", {
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
@@ -60,7 +61,7 @@ export default function UserManagementTable({ users, onRefresh }) {
         onRefresh?.();
       }
     } catch (error) {
-      console.error('Error updating role:', error);
+      console.error("Error updating role:", error);
     }
   };
 
@@ -83,9 +84,11 @@ export default function UserManagementTable({ users, onRefresh }) {
               <td>
                 <div className={styles.userInfo}>
                   {user.profilePhoto && (
-                    <img
+                    <Image
                       src={user.profilePhoto}
                       alt={user.name}
+                      width={40}
+                      height={40}
                       className={styles.avatar}
                     />
                   )}
@@ -96,7 +99,7 @@ export default function UserManagementTable({ users, onRefresh }) {
               <td>
                 <select
                   className={styles.roleSelect}
-                  value={user.role || 'employee'}
+                  value={user.role || "employee"}
                   onChange={(e) => handleRoleChange(user._id, e.target.value)}
                 >
                   <option value="owner">Owner</option>
@@ -113,13 +116,13 @@ export default function UserManagementTable({ users, onRefresh }) {
                     user.isActive !== false ? styles.active : styles.inactive
                   }`}
                 >
-                  {user.isActive !== false ? 'Active' : 'Inactive'}
+                  {user.isActive !== false ? "Active" : "Inactive"}
                 </span>
               </td>
               <td>
                 {user.lastSeen
                   ? new Date(user.lastSeen).toLocaleDateString()
-                  : 'Never'}
+                  : "Never"}
               </td>
               <td>
                 <div className={styles.actions}>
@@ -134,7 +137,7 @@ export default function UserManagementTable({ users, onRefresh }) {
                     onClick={() => handleDelete(user._id)}
                     disabled={deletingId === user._id}
                   >
-                    {deletingId === user._id ? 'Deleting...' : 'Delete'}
+                    {deletingId === user._id ? "Deleting..." : "Delete"}
                   </button>
                 </div>
               </td>
@@ -145,4 +148,3 @@ export default function UserManagementTable({ users, onRefresh }) {
     </div>
   );
 }
-

@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import connectDB from '../../../../../lib/mongodb.js';
-import { requireAdmin } from '../../../../../lib/adminAuth.js';
-import { logAudit } from '../../../../../lib/auditLogger.js';
-import User from '../../../../../models/User.js';
-import { hashPassword } from '../../../../../lib/utils.js';
+import connectDB from '../../../../../../lib/mongodb.js';
+import { requireAdmin } from '../../../../../../lib/adminAuth.js';
+import { logAudit } from '../../../../../../lib/auditLogger.js';
+import User from '../../../../../../models/User.js';
+import { hashPassword } from '../../../../../../lib/utils.js';
 
 // Get user by ID
 export async function GET(request, { params }) {
@@ -14,9 +14,10 @@ export async function GET(request, { params }) {
     if (auth.error) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
-
+    console.log("params");
+    console.log(params);
     const { id } = params;
-
+    console.log(id)
     const user = await User.findById(id).select('-passwordHash -otpSecret').lean();
 
     if (!user) {

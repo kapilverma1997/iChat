@@ -18,6 +18,7 @@ export default function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
+    alert("(admin)/dashboard.");
     fetchUser();
     fetchChats();
     fetchGroups();
@@ -94,7 +95,11 @@ export default function DashboardLayout({ children }) {
               />
             </>
           )}
-          <main className={`${styles.main} ${showSidebar ? styles.withSidebar : ""}`}>
+          <main
+            className={`${styles.main} ${
+              showSidebar ? styles.withSidebar : ""
+            }`}
+          >
             {pathname !== "/dashboard" && <Breadcrumbs />}
             {children}
           </main>
@@ -103,4 +108,3 @@ export default function DashboardLayout({ children }) {
     </ProtectedLayout>
   );
 }
-

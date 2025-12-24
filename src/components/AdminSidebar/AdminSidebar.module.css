@@ -4,9 +4,8 @@
   border-right: 1px solid var(--border-color, #e0e0e0);
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 64px);
   position: sticky;
-  top: 64px;
+  top: 0;
   transition: width 0.3s;
   overflow-y: auto;
 }
@@ -152,4 +151,3 @@
 [data-theme="dark"] .menuItem.active {
   background: var(--bg-primary, #2d2d2d);
 }
-
