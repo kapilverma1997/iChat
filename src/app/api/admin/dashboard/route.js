@@ -26,7 +26,7 @@ export async function GET(request) {
 
     // Total users
     const totalUsers = await User.countDocuments();
-    
+
     // Active users (online in last 5 minutes)
     const activeUsers = await ActiveUser.countDocuments({
       isOnline: true,

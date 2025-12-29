@@ -7,6 +7,7 @@
   width: 300px;
   transition: width 0.2s ease;
   min-width: 60px;
+  border-right: 1px solid var(--border-color, #e0e0e0);
 }
 
 .container.collapsed {

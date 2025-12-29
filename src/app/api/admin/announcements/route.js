@@ -3,6 +3,7 @@ import connectDB from '../../../../../lib/mongodb.js';
 import { requireAdmin } from '../../../../../lib/adminAuth.js';
 import { logAudit } from '../../../../../lib/auditLogger.js';
 import Announcement from '../../../../../models/Announcement.js';
+import Department from '../../../../../models/Department.js';
 import { createNotification } from '../../../../../lib/notifications.js';
 import { getIO } from '../../../../../lib/socket.js';
 

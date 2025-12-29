@@ -85,6 +85,9 @@ export async function POST(request) {
     const fileName = `${timestamp}-${originalFileName}`;
     const filePath = join(uploadsDir, fileName);
 
+    // Create file URL early so it can be used in thumbnail fallback
+    const fileUrl = `/uploads/${fileName}`;
+
     const bytes = await file.arrayBuffer();
     let buffer = Buffer.from(bytes);
 
@@ -131,9 +134,6 @@ export async function POST(request) {
     }
 
     await writeFile(filePath, buffer);
-
-    // Create file URL
-    const fileUrl = `/uploads/${fileName}`;
 
     // Calculate expiration date
     let expiresAt = null;

@@ -14,10 +14,8 @@ export async function GET(request, { params }) {
     if (auth.error) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
-    console.log("params");
-    console.log(params);
-    const { id } = params;
-    console.log(id)
+    
+    const { id } = await params;
     const user = await User.findById(id).select('-passwordHash -otpSecret').lean();
 
     if (!user) {
@@ -44,7 +42,7 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     const user = await User.findById(id);
@@ -117,7 +115,7 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const user = await User.findById(id);
     if (!user) {

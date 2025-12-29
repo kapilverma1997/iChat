@@ -23,11 +23,11 @@ const getMenuItems = (lang) => [
     label: getTranslation(lang, "rolesPermissions"),
     icon: "🔐",
   },
-  {
-    path: "/admin/import-employees",
-    label: getTranslation(lang, "importEmployees"),
-    icon: "📥",
-  },
+  // {
+  //   path: "/admin/import-employees",
+  //   label: getTranslation(lang, "importEmployees"),
+  //   icon: "📥",
+  // },
   {
     path: "/admin/active-users",
     label: getTranslation(lang, "activeUsers"),
@@ -38,11 +38,11 @@ const getMenuItems = (lang) => [
     label: getTranslation(lang, "storageAnalytics"),
     icon: "💾",
   },
-  {
-    path: "/admin/analytics/files",
-    label: getTranslation(lang, "fileAnalytics"),
-    icon: "📊",
-  },
+  // {
+  //   path: "/admin/analytics/files",
+  //   label: getTranslation(lang, "fileAnalytics"),
+  //   icon: "📊",
+  // },
   {
     path: "/admin/message-logs",
     label: getTranslation(lang, "messageLogs"),

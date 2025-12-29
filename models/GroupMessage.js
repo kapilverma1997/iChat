@@ -42,7 +42,8 @@ const GroupMessageSchema = new Schema(
     },
     content: {
       type: String,
-      required: true,
+      required: false,
+      default: '',
       trim: true,
     },
     type: {

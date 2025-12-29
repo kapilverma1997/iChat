@@ -1,33 +1,29 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import AdminLayout from '../../../components/AdminLayout/AdminLayout.jsx';
-import styles from './page.module.css';
+import { useState, useEffect, useCallback } from "react";
+import AdminLayout from "../../../components/AdminLayout/AdminLayout.jsx";
+import styles from "./page.module.css";
 
 export default function MessageLogsPage() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
-    search: '',
-    senderId: '',
-    dateFrom: '',
-    dateTo: '',
-    fileType: '',
-    isFlagged: '',
+    search: "",
+    senderId: "",
+    dateFrom: "",
+    dateTo: "",
+    fileType: "",
+    isFlagged: "",
   });
   const [page, setPage] = useState(1);
 
-  useEffect(() => {
-    fetchLogs();
-  }, [page, filters]);
-
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '50',
+        limit: "50",
       });
 
       Object.keys(filters).forEach((key) => {
@@ -36,30 +32,37 @@ export default function MessageLogsPage() {
         }
       });
 
-      const response = await fetch(`/api/admin/messageLogs?${params.toString()}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `/api/admin/messageLogs?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
         setLogs(data.messageLogs || []);
       }
     } catch (error) {
-      console.error('Error fetching message logs:', error);
+      console.error("Error fetching message logs:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, filters]);
+
+  useEffect(() => {
+    fetchLogs();
+  }, [fetchLogs]);
 
   const handleFlag = async (logId, reason) => {
     try {
-      const token = localStorage.getItem('accessToken');
-      await fetch('/api/admin/messageLogs', {
-        method: 'POST',
+      const token = localStorage.getItem("accessToken");
+      await fetch("/api/admin/messageLogs", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
@@ -69,7 +72,7 @@ export default function MessageLogsPage() {
       });
       fetchLogs();
     } catch (error) {
-      console.error('Error flagging message:', error);
+      console.error("Error flagging message:", error);
     }
   };
 
@@ -120,6 +123,15 @@ export default function MessageLogsPage() {
 
         {loading ? (
           <div className={styles.loading}>Loading message logs...</div>
+        ) : logs.length === 0 ? (
+          <div className={styles.emptyState}>
+            <p>No message logs found.</p>
+            <p className={styles.emptyStateHint}>
+              Message logs are created automatically when messages are sent. If
+              you have existing messages, run the backfill script:{" "}
+              <code>npm run backfill:logs</code>
+            </p>
+          </div>
         ) : (
           <div className={styles.tableContainer}>
             <table className={styles.table}>
@@ -136,9 +148,9 @@ export default function MessageLogsPage() {
               <tbody>
                 {logs.map((log) => (
                   <tr key={log._id}>
-                    <td>{log.senderId?.name || 'Unknown'}</td>
+                    <td>{log.senderId?.name || "Unknown"}</td>
                     <td className={styles.contentCell}>
-                      {log.content?.substring(0, 50) || log.fileName || 'N/A'}
+                      {log.content?.substring(0, 50) || log.fileName || "N/A"}
                     </td>
                     <td>{log.type}</td>
                     <td>{new Date(log.createdAt).toLocaleString()}</td>
@@ -153,7 +165,9 @@ export default function MessageLogsPage() {
                       {!log.isFlagged && (
                         <button
                           className={styles.flagButton}
-                          onClick={() => handleFlag(log._id, 'Flagged by admin')}
+                          onClick={() =>
+                            handleFlag(log._id, "Flagged by admin")
+                          }
                         >
                           Flag
                         </button>
@@ -169,4 +183,3 @@ export default function MessageLogsPage() {
     </AdminLayout>
   );
 }
-

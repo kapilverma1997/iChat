@@ -3,6 +3,7 @@ import connectDB from '../../../../../lib/mongodb.js';
 import { getAuthenticatedUser } from '../../../../../lib/auth.js';
 import Chat from '../../../../../models/Chat.js';
 import Message from '../../../../../models/Message.js';
+import MessageLog from '../../../../../models/MessageLog.js';
 import { getIO } from '../../../../../lib/socket.js';
 
 export async function POST(request) {
@@ -84,6 +85,22 @@ export async function POST(request) {
     });
 
     await chat.save();
+
+    // Log message for admin tracking
+    try {
+      await MessageLog.create({
+        messageId: message._id,
+        senderId: user._id,
+        chatId: chatId,
+        content: content || '',
+        type: type,
+        fileUrl: fileUrl || '',
+        fileName: fileName || '',
+      });
+    } catch (logError) {
+      console.error('Error creating message log:', logError);
+      // Don't fail the request if logging fails
+    }
 
     // Populate message with sender info
     await message.populate('senderId', 'name email profilePhoto');

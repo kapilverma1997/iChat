@@ -3,6 +3,7 @@ import connectDB from '../../../../../../lib/mongodb.js';
 import { getAuthenticatedUser } from '../../../../../../lib/auth.js';
 import Group from '../../../../../../models/Group.js';
 import GroupMessage from '../../../../../../models/GroupMessage.js';
+import GroupPoll from '../../../../../../models/GroupPoll.js';
 import { getMemberRole } from '../../../../../../lib/groupPermissions.js';
 
 export async function GET(request) {
@@ -57,8 +58,32 @@ export async function GET(request) {
     // Reverse to show oldest first
     messages.reverse();
 
+    // Fetch poll data for poll messages
+    const pollMessageIds = messages
+      .filter(msg => msg.type === 'poll')
+      .map(msg => msg._id);
+
+    const polls = await GroupPoll.find({ messageId: { $in: pollMessageIds } })
+      .populate('createdBy', 'name email profilePhoto')
+      .populate('options.votes.userId', 'name email profilePhoto');
+
+    // Create a map of messageId -> poll
+    const pollMap = {};
+    polls.forEach(poll => {
+      pollMap[poll.messageId.toString()] = poll.toObject();
+    });
+
+    // Attach poll data to messages
+    const messagesWithPolls = messages.map(msg => {
+      const messageObj = msg.toObject();
+      if (msg.type === 'poll' && pollMap[msg._id.toString()]) {
+        messageObj.poll = pollMap[msg._id.toString()];
+      }
+      return messageObj;
+    });
+
     return NextResponse.json({
-      messages,
+      messages: messagesWithPolls,
       page,
       limit,
       hasMore: messages.length === limit,

@@ -1,5 +1,6 @@
 'use client';
 
+import { Fragment } from 'react';
 import styles from './UsageHeatmap.module.css';
 
 export default function UsageHeatmap({ data }) {
@@ -44,8 +45,8 @@ export default function UsageHeatmap({ data }) {
             </div>
           ))}
           {hours.map((hour) => (
-            <>
-              <div key={`hour-${hour}`} className={styles.hourLabel}>
+            <Fragment key={`hour-row-${hour}`}>
+              <div className={styles.hourLabel}>
                 {hour}:00
               </div>
               {daysOfWeek.map((day, dayIndex) => {
@@ -62,7 +63,7 @@ export default function UsageHeatmap({ data }) {
                   </div>
                 );
               })}
-            </>
+            </Fragment>
           ))}
         </div>
         <div className={styles.legend}>

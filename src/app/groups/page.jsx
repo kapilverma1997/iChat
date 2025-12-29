@@ -26,16 +26,6 @@ export default function GroupsPage() {
   const [showMediaGallery, setShowMediaGallery] = useState(false);
   const [groupData, setGroupData] = useState(null);
 
-  useEffect(() => {
-    loadCurrentUser();
-  }, []);
-
-  useEffect(() => {
-    if (selectedGroup?._id) {
-      loadGroupDetails();
-    }
-  }, [selectedGroup?._id]);
-
   const loadCurrentUser = async () => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -53,6 +43,8 @@ export default function GroupsPage() {
   };
 
   const loadGroupDetails = async () => {
+    if (!selectedGroup?._id) return;
+
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(`/api/groups/${selectedGroup._id}`, {
@@ -68,6 +60,16 @@ export default function GroupsPage() {
       console.error("Error loading group details:", error);
     }
   };
+
+  useEffect(() => {
+    loadCurrentUser();
+  }, []);
+
+  useEffect(() => {
+    if (selectedGroup?._id) {
+      loadGroupDetails();
+    }
+  }, [selectedGroup?._id]);
 
   const handleSelectGroup = (group) => {
     setSelectedGroup(group);
@@ -109,12 +111,10 @@ export default function GroupsPage() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.sidebar}>
-        <GroupList
-          onSelectGroup={handleSelectGroup}
-          selectedGroupId={selectedGroup?._id}
-        />
-      </div>
+      <GroupList
+        onSelectGroup={handleSelectGroup}
+        selectedGroupId={selectedGroup?._id}
+      />
 
       <div className={styles.main}>
         {selectedGroup ? (

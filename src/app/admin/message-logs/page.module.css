@@ -109,3 +109,31 @@
   color: #6b7280;
 }
 
+.emptyState {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.emptyState p {
+  margin: 0 0 12px 0;
+  color: #6b7280;
+  font-size: 16px;
+}
+
+.emptyStateHint {
+  font-size: 14px !important;
+  color: #9ca3af !important;
+  margin-top: 8px !important;
+}
+
+.emptyStateHint code {
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  color: #667eea;
+}
+

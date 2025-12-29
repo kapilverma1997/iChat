@@ -62,7 +62,7 @@ export default function GroupList({ onSelectGroup, selectedGroupId }) {
   const handleMouseMove = (e) => {
     if (!isResizingRef.current) return;
     
-    const diff = startXRef.current - e.clientX;
+    const diff = e.clientX - startXRef.current;
     const newWidth = startWidthRef.current + diff;
     const minWidth = 60;
     const maxWidth = 500;

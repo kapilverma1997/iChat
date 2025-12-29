@@ -586,7 +586,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      {/* <section id="features" className={styles.features}>
+      <section id="features" className={styles.features}>
         <Container>
           <SectionHeading
             title="Everything You Need to Chat"
@@ -609,7 +609,7 @@ export default function Home() {
             </div>
           ))}
         </Container>
-      </section> */}
+      </section>
 
       {/* Contact Section */}
       <section id="contact" className={styles.contact}>

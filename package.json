@@ -11,7 +11,11 @@
     "seed": "node scripts/seed.js",
     "seed:groups": "node scripts/seedGroups.js",
     "seed:advanced": "node scripts/seedAdvancedFeatures.js",
-    "seed:cronJobs": "node scripts/cronJobs.js"
+    "seed:cronJobs": "node scripts/cronJobs.js",
+    "seed:orgChart": "node scripts/seedOrgChart.js",
+    "seed:devices": "node scripts/seedDevices.js",
+    "seed:heatmap": "node scripts/seedUsageHeatmap.js",
+    "backfill:logs": "node scripts/backfillMessageLogs.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

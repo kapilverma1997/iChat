@@ -84,11 +84,13 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ### 3. Seed Database
 
 First, create users:
+
 ```bash
 npm run seed
 ```
 
 Then, create groups:
+
 ```bash
 npm run seed:groups
 ```
@@ -104,6 +106,7 @@ Visit `http://localhost:3000/groups` to access the group chat system.
 ## ✨ Features Implemented
 
 ### 1. Group Creation & Types
+
 - ✅ Create groups
 - ✅ Public groups (anyone can join)
 - ✅ Private groups (invite-only)
@@ -111,6 +114,7 @@ Visit `http://localhost:3000/groups` to access the group chat system.
 - ✅ Convert private ↔ public
 
 ### 2. Group Profile
+
 - ✅ Group photo
 - ✅ Group description
 - ✅ Group name
@@ -118,6 +122,7 @@ Visit `http://localhost:3000/groups` to access the group chat system.
 - ✅ Member count display
 
 ### 3. Group Roles & Permissions
+
 - ✅ Owner, Admin, Moderator, Member, Read-only roles
 - ✅ Complete permission system:
   - Can Send Message
@@ -130,6 +135,7 @@ Visit `http://localhost:3000/groups` to access the group chat system.
   - Create Events
 
 ### 4. Member Management
+
 - ✅ Add members
 - ✅ Remove/kick members
 - ✅ Approve join requests (private groups)
@@ -137,6 +143,7 @@ Visit `http://localhost:3000/groups` to access the group chat system.
 - ✅ Role management
 
 ### 5. Messaging Features
+
 - ✅ Group mentions (@username, @everyone)
 - ✅ Threaded replies (Slack-style)
 - ✅ Group polls & surveys
@@ -145,6 +152,7 @@ Visit `http://localhost:3000/groups` to access the group chat system.
 - ✅ Shared media gallery
 
 ### 6. Group Settings
+
 - ✅ Only admins can send files
 - ✅ Only admins can create polls
 - ✅ Only admins can change group info
@@ -154,6 +162,7 @@ Visit `http://localhost:3000/groups` to access the group chat system.
 - ✅ Disable message replies
 
 ### 7. Real-Time Features
+
 - ✅ Socket.io integration
 - ✅ Real-time message delivery
 - ✅ Typing indicators
@@ -164,12 +173,14 @@ Visit `http://localhost:3000/groups` to access the group chat system.
 ## 📡 Socket.io Events
 
 ### Client → Server
+
 - `joinGroup` - Join a group room
 - `leaveGroup` - Leave a group room
 - `groupTyping` - User is typing
 - `groupStopTyping` - User stopped typing
 
 ### Server → Client
+
 - `group:create` - New group created
 - `group:updateInfo` - Group info updated
 - `group:joinRequest` - Join request received
@@ -188,6 +199,7 @@ Visit `http://localhost:3000/groups` to access the group chat system.
 ## 🔌 API Endpoints
 
 ### Groups
+
 - `POST /api/groups/create` - Create group
 - `GET /api/groups/list` - List groups
 - `GET /api/groups/[groupId]` - Get group details
@@ -199,20 +211,24 @@ Visit `http://localhost:3000/groups` to access the group chat system.
 - `POST /api/groups/approve-request` - Approve join request
 
 ### Messages
+
 - `POST /api/groups/messages/send` - Send message
 - `GET /api/groups/messages/list` - List messages
 - `POST /api/groups/messages/thread` - Reply in thread
 - `POST /api/groups/messages/delete` - Delete message
 
 ### Polls
+
 - `POST /api/groups/polls/create` - Create poll
 - `POST /api/groups/polls/vote` - Vote on poll
 
 ### Events
+
 - `POST /api/groups/events/create` - Create event
 - `POST /api/groups/events/rsvp` - RSVP to event
 
 ### Other
+
 - `POST /api/groups/pin` - Pin/unpin message
 - `GET /api/groups/media` - Get shared media
 
@@ -238,6 +254,7 @@ All components use CSS Modules (no Tailwind) and are fully reusable:
 ## 📊 Sample Data
 
 The seed script creates:
+
 - **5 Public Groups**: Tech Enthusiasts, Design Community, Startup Founders, Web Developers, Open Source Contributors
 - **3 Private Groups**: VIP Members, Beta Testers, Team Leads
 - **2 Announcement Groups**: Company Announcements, System Updates
@@ -246,6 +263,7 @@ The seed script creates:
 ## 🔐 Authentication
 
 All API routes require JWT authentication via Bearer token:
+
 ```
 Authorization: Bearer <accessToken>
 ```
@@ -255,71 +273,77 @@ Get token by logging in at `/auth/login`.
 ## 🎯 Usage Examples
 
 ### Create a Group
+
 ```javascript
-const response = await fetch('/api/groups/create', {
-  method: 'POST',
+const response = await fetch("/api/groups/create", {
+  method: "POST",
   headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
   },
   body: JSON.stringify({
-    name: 'My Group',
-    description: 'Group description',
-    groupType: 'public',
+    name: "My Group",
+    description: "Group description",
+    groupType: "public",
     settings: {
       allowReactions: true,
-      allowReplies: true
-    }
-  })
+      allowReplies: true,
+    },
+  }),
 });
 ```
 
 ### Send a Message
+
 ```javascript
-const response = await fetch('/api/groups/messages/send', {
-  method: 'POST',
+const response = await fetch("/api/groups/messages/send", {
+  method: "POST",
   headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
   },
   body: JSON.stringify({
-    groupId: 'group_id',
-    content: 'Hello everyone!',
-    type: 'text'
-  })
+    groupId: "group_id",
+    content: "Hello everyone!",
+    type: "text",
+  }),
 });
 ```
 
 ### Create a Poll
+
 ```javascript
-const response = await fetch('/api/groups/polls/create', {
-  method: 'POST',
+const response = await fetch("/api/groups/polls/create", {
+  method: "POST",
   headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
   },
   body: JSON.stringify({
-    groupId: 'group_id',
-    question: 'What is your favorite language?',
-    options: ['JavaScript', 'Python', 'Java'],
-    allowMultipleChoices: false
-  })
+    groupId: "group_id",
+    question: "What is your favorite language?",
+    options: ["JavaScript", "Python", "Java"],
+    allowMultipleChoices: false,
+  }),
 });
 ```
 
 ## 🐛 Troubleshooting
 
 ### Socket.io not connecting
+
 - Check `NEXT_PUBLIC_APP_URL` in `.env.local`
 - Ensure server is running on the correct port
 - Check browser console for connection errors
 
 ### Permission errors
+
 - Verify user role in group
 - Check group settings (read-only mode, etc.)
 - Ensure user is a member of the group
 
 ### Messages not appearing
+
 - Check Socket.io connection
 - Verify group membership
 - Check browser console for errors
@@ -346,4 +370,3 @@ const response = await fetch('/api/groups/polls/create', {
 ## 📄 License
 
 This project is part of the iChat application.
-

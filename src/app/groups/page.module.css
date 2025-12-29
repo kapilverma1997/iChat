@@ -4,13 +4,6 @@
   overflow: hidden;
 }
 
-.sidebar {
-  width: 300px;
-  border-right: 1px solid var(--border-color, #e0e0e0);
-  overflow: hidden;
-  min-width: 60px;
-}
-
 .main {
   flex: 1;
   display: flex;

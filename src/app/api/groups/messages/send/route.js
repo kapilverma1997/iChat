@@ -3,6 +3,7 @@ import connectDB from '../../../../../../lib/mongodb.js';
 import { getAuthenticatedUser } from '../../../../../../lib/auth.js';
 import Group from '../../../../../../models/Group.js';
 import GroupMessage from '../../../../../../models/GroupMessage.js';
+import MessageLog from '../../../../../../models/MessageLog.js';
 import { getMemberRole, hasPermission } from '../../../../../../lib/groupPermissions.js';
 import { emitGroupEvent } from '../../../../../../lib/socket.js';
 
@@ -17,8 +18,18 @@ export async function POST(request) {
 
     const { groupId, content, type, fileUrl, fileName, fileSize, metadata, mentions, replyTo } = await request.json();
 
-    if (!groupId || !content) {
-      return NextResponse.json({ error: 'Group ID and content are required' }, { status: 400 });
+    if (!groupId) {
+      return NextResponse.json({ error: 'Group ID is required' }, { status: 400 });
+    }
+
+    // Allow empty content for certain message types (emoji, location, contact, image, video, file)
+    const messageType = type || 'text';
+    // Ensure content is always a string, default to empty string
+    const messageContent = (content !== null && content !== undefined) ? String(content) : '';
+
+    // Only require content if it's a text message without a file
+    if (!messageContent && !['emoji', 'location', 'contact', 'image', 'video', 'file', 'audio', 'voice'].includes(messageType) && !fileUrl) {
+      return NextResponse.json({ error: 'Content is required' }, { status: 400 });
     }
 
     const group = await Group.findById(groupId);
@@ -55,12 +66,13 @@ export async function POST(request) {
       }
     }
 
-    // Create message
+    // Create message - ensure content is always a string (empty string is valid for images/videos/files)
+    const finalContent = typeof messageContent === 'string' ? messageContent.trim() : '';
     const message = await GroupMessage.create({
       groupId,
       senderId: user._id,
-      content: content.trim(),
-      type: type || 'text',
+      content: finalContent,
+      type: messageType,
       fileUrl: fileUrl || '',
       fileName: fileName || '',
       fileSize: fileSize || 0,
@@ -73,6 +85,22 @@ export async function POST(request) {
     group.lastMessage = message._id;
     group.lastMessageAt = new Date();
     await group.save();
+
+    // Log message for admin tracking
+    try {
+      await MessageLog.create({
+        messageId: message._id,
+        senderId: user._id,
+        groupId: groupId,
+        content: finalContent,
+        type: messageType,
+        fileUrl: fileUrl || '',
+        fileName: fileName || '',
+      });
+    } catch (logError) {
+      console.error('Error creating message log:', logError);
+      // Don't fail the request if logging fails
+    }
 
     await message.populate('senderId', 'name email profilePhoto');
     await message.populate('replyTo');
