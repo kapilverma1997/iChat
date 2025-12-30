@@ -265,14 +265,14 @@ async function seedAdvancedFeatures() {
     chat.lastMessageAt = new Date();
     await chat.save();
 
-    console.log('✅ Created advanced features:');
-    console.log(`   - ${messages.length} messages with various features`);
-    console.log(`   - ${file1 ? 1 : 0} image file`);
-    console.log(`   - ${file2 ? 1 : 0} document file`);
-    console.log(`   - ${reminder1 ? 1 : 0} reminder`);
-    console.log(`   - ${reminder2 ? 1 : 0} reminder`);
-    console.log(`   - ${scheduled1 ? 1 : 0} scheduled message`);
-    console.log(`   - ${scheduled2 ? 1 : 0} scheduled message`);
+    // console.log('✅ Created advanced features:');
+    // console.log(`   - ${messages.length} messages with various features`);
+    // console.log(`   - ${file1 ? 1 : 0} image file`);
+    // console.log(`   - ${file2 ? 1 : 0} document file`);
+    // console.log(`   - ${reminder1 ? 1 : 0} reminder`);
+    // console.log(`   - ${reminder2 ? 1 : 0} reminder`);
+    // console.log(`   - ${scheduled1 ? 1 : 0} scheduled message`);
+    // console.log(`   - ${scheduled2 ? 1 : 0} scheduled message`);
 
     console.log('\n✨ Advanced features seeding completed!');
     process.exit(0);

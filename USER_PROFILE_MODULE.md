@@ -61,16 +61,18 @@ ichat/
 **Endpoint:** `POST /api/auth/register`
 
 **Request Body:**
+
 ```json
 {
   "name": "John Doe",
   "email": "john@example.com",
-  "phone": "+1234567890",  // Optional
+  "phone": "+1234567890", // Optional
   "password": "securepassword123"
 }
 ```
 
 **Response:**
+
 ```json
 {
   "message": "User registered successfully",
@@ -85,6 +87,7 @@ ichat/
 **Endpoint:** `POST /api/auth/login`
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com",
@@ -98,6 +101,7 @@ ichat/
 **Endpoint:** `POST /api/auth/logout`
 
 **Headers:**
+
 ```
 Authorization: Bearer <accessToken>
 ```
@@ -105,34 +109,41 @@ Authorization: Bearer <accessToken>
 ### OTP Authentication
 
 **Request OTP:**
+
 - `POST /api/auth/request-otp`
 - Body: `{ "email": "...", "type": "email" }` or `{ "phone": "...", "type": "sms" }`
 
 **Verify OTP:**
+
 - `POST /api/auth/verify-otp`
 - Body: `{ "email": "...", "otp": "123456", "type": "email" }`
 
 ### Password Reset
 
 **Request Reset:**
+
 - `POST /api/auth/reset-password`
 - Body: `{ "email": "...", "action": "request" }`
 
 **Reset Password:**
+
 - `POST /api/auth/reset-password`
 - Body: `{ "resetToken": "...", "newPassword": "...", "action": "reset" }`
 
 ### Two-Factor Authentication (TOTP)
 
 **Setup TOTP:**
+
 - `POST /api/auth/setup-totp`
 - Returns QR code URL and secret
 
 **Enable TOTP:**
+
 - `POST /api/auth/enable-totp`
 - Body: `{ "totpToken": "123456" }`
 
 **Verify TOTP:**
+
 - `POST /api/auth/verify-totp`
 - Body: `{ "totpToken": "123456" }`
 
@@ -141,7 +152,9 @@ Authorization: Bearer <accessToken>
 **Providers:** Google, GitHub
 
 **Setup:**
+
 1. Add environment variables:
+
    - `GOOGLE_CLIENT_ID`
    - `GOOGLE_CLIENT_SECRET`
    - `GITHUB_CLIENT_ID`
@@ -156,6 +169,7 @@ Authorization: Bearer <accessToken>
 **Endpoint:** `GET /api/user/me`
 
 **Headers:**
+
 ```
 Authorization: Bearer <accessToken>
 ```
@@ -165,6 +179,7 @@ Authorization: Bearer <accessToken>
 **Endpoint:** `PATCH /api/user/update-profile`
 
 **Body:**
+
 ```json
 {
   "name": "John Doe",
@@ -179,9 +194,10 @@ Authorization: Bearer <accessToken>
 **Endpoint:** `PATCH /api/user/update-status`
 
 **Body:**
+
 ```json
 {
-  "presenceStatus": "online",  // online | offline | away | do-not-disturb
+  "presenceStatus": "online", // online | offline | away | do-not-disturb
   "statusMessage": "Busy"
 }
 ```
@@ -191,9 +207,10 @@ Authorization: Bearer <accessToken>
 **Endpoint:** `PATCH /api/user/update-theme`
 
 **Body:**
+
 ```json
 {
-  "theme": "dark",  // light | dark | custom
+  "theme": "dark", // light | dark | custom
   "customTheme": "...",
   "chatWallpaper": "..."
 }
@@ -204,6 +221,7 @@ Authorization: Bearer <accessToken>
 **Endpoint:** `PATCH /api/user/update-language`
 
 **Body:**
+
 ```json
 {
   "language": "en"
@@ -215,6 +233,7 @@ Authorization: Bearer <accessToken>
 **Endpoint:** `PATCH /api/user/update-privacy`
 
 **Body:**
+
 ```json
 {
   "privacySettings": {
@@ -233,6 +252,7 @@ Authorization: Bearer <accessToken>
 **Endpoint:** `POST /api/presence/update`
 
 **Body:**
+
 ```json
 {
   "presenceStatus": "online"
@@ -242,14 +262,16 @@ Authorization: Bearer <accessToken>
 ### Client-Side Presence
 
 The presence system automatically:
+
 - Sets user to "online" on page load
 - Tracks user activity (mouse, keyboard, scroll, touch)
 - Sets user to "away" after 5 minutes of inactivity
 - Sets user to "offline" on page unload
 
 **Usage:**
+
 ```typescript
-import { initializePresence, cleanupPresence } from '@/lib/presence';
+import { initializePresence, cleanupPresence } from "@/lib/presence";
 
 // In your component
 useEffect(() => {
@@ -277,11 +299,7 @@ Upload and preview profile photos.
 Display user presence status.
 
 ```tsx
-<StatusBadge
-  status="online"
-  size="medium"
-  showLabel
-/>
+<StatusBadge status="online" size="medium" showLabel />
 ```
 
 ### ThemeSelector
@@ -289,10 +307,7 @@ Display user presence status.
 Select app theme.
 
 ```tsx
-<ThemeSelector
-  currentTheme="dark"
-  onThemeChange={handleThemeChange}
-/>
+<ThemeSelector currentTheme="dark" onThemeChange={handleThemeChange} />
 ```
 
 ### LanguageSelector
@@ -311,11 +326,7 @@ Select app language.
 Display user profile information.
 
 ```tsx
-<ProfileCard
-  user={user}
-  showActions
-  onEdit={handleEdit}
-/>
+<ProfileCard user={user} showActions onEdit={handleEdit} />
 ```
 
 ### ProtectedLayout
@@ -331,11 +342,13 @@ Protect routes requiring authentication.
 ## 🔒 Middleware Protection
 
 The middleware (`middleware.ts`) automatically:
+
 - Redirects unauthenticated users to `/auth/login`
 - Redirects authenticated users away from auth pages
 - Protects all routes except public ones
 
 **Public Routes:**
+
 - `/`
 - `/auth/login`
 - `/auth/register`
@@ -429,12 +442,14 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ### Registration → Login → Update Profile → Presence
 
 1. **Register:**
+
    ```bash
    POST /api/auth/register
    Body: { name, email, password }
    ```
 
 2. **Login:**
+
    ```bash
    POST /api/auth/login
    Body: { email, password }
@@ -442,6 +457,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
    ```
 
 3. **Update Profile:**
+
    ```bash
    PATCH /api/user/update-profile
    Headers: { Authorization: Bearer <token> }
@@ -488,4 +504,3 @@ The User & Profile module is designed to integrate seamlessly with future chat f
 - Password reset tokens expire after 1 hour
 - Presence automatically updates based on user activity
 - All API routes include proper error handling and validation
-

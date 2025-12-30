@@ -84,7 +84,9 @@ export default function MessageInput({
   };
 
   const handleSend = async (messageType = "text", additionalData = {}) => {
-    const messageContent = additionalData?.content?.trim() || "";
+    console.log("Message type", messageType);
+    const messageContent =
+      additionalData?.content?.trim() || content.trim() || "";
     console.log(messageContent);
     // Don't send if no content and no files (allow contact and location messages)
     if (

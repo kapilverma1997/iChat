@@ -6,8 +6,11 @@ import styles from "./AppLayout.module.css";
 
 export default function AppLayout({ children }) {
   const pathname = usePathname();
-  // Don't show sidebar on auth pages or landing page
-  const hideSidebar = pathname.startsWith("/auth") || pathname === "/";
+  // Don't show sidebar on auth pages, landing page, or public pages
+  const publicPages = ["/", "/security", "/about", "/blog", "/help", "/status"];
+  const hideSidebar = 
+    pathname.startsWith("/auth") || 
+    publicPages.includes(pathname);
 
   return (
     <div className={styles.appContainer}>

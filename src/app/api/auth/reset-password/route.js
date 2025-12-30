@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import connectDB from '../../../../../../lib/mongodb.js';
+import connectDB from '../../../../../lib/mongodb.js';
 import User from '../../../../../models/User.js';
 import Session from '../../../../../models/Session.js';
 import { hashPassword, generateOTP, isValidEmail } from '../../../../../lib/utils.js';
@@ -43,13 +43,14 @@ export async function POST(request) {
         ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
         userAgent: request.headers.get('user-agent') || undefined,
       });
-
+      console.log("Sending email to", email);
       // Send reset email
       await sendEmail({
         to: email,
         subject: 'Reset Your iChat Password',
         html: getPasswordResetEmailTemplate(resetLink, user.name),
       });
+      console.log("Sent email to", email);
 
       return NextResponse.json({
         message: 'If the email exists, a password reset link has been sent',

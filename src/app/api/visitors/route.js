@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import connectDB from "../../../../../lib/mongodb.js";
+import connectDB from "../../../../lib/mongodb.js";
 import LandingPageVisitor from "../../../../models/LandingPageVisitor.js";
 
 export async function POST(request) {

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '../../../../../lib/mongodb.js';
 import User from '../../../../../models/User.js';
-import { verifyAccessToken } from '../../../../lib/utils.js';
+import verifyAccessToken from '../../../../../lib/verifyAccessToken.js';
 
 export async function PATCH(request) {
   try {

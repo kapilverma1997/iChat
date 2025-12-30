@@ -1,8 +1,8 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import GitHubProvider from "next-auth/providers/github";
-import connectDB from "../../../../../../lib/mongodb.js";
 import User from "../../../../../models/User.js";
+import connectDB from "../../../../../lib/mongodb.js";
 
 export const authOptions = {
   providers: [
@@ -15,6 +15,7 @@ export const authOptions = {
       clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
     }),
   ],
+  secret: process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET,
   callbacks: {
     async signIn({ user, account, profile }) {
       try {
@@ -45,6 +46,9 @@ export const authOptions = {
           await dbUser.save();
         }
 
+        // Store user ID in token for later use
+        user.id = dbUser._id.toString();
+
         return true;
       } catch (error) {
         console.error("Sign in error:", error);
@@ -54,14 +58,21 @@ export const authOptions = {
     async jwt({ token, user, account }) {
       if (user) {
         token.userId = user.id;
+        token.email = user.email;
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user && token.userId) {
-        session.user.id = token.userId;
+      try {
+        if (session?.user && token?.userId) {
+          session.user.id = token.userId;
+          session.user.email = token.email || session.user.email;
+        }
+        return session || {};
+      } catch (error) {
+        console.error("Session callback error:", error);
+        return {};
       }
-      return session;
     },
   },
   pages: {
@@ -69,6 +80,7 @@ export const authOptions = {
   },
 };
 
+// Export handlers for Next.js App Router
+// NextAuth returns an object with GET and POST handlers
 const handler = NextAuth(authOptions);
-
-export { handler as GET, handler as POST };
+export const { GET, POST } = handler;

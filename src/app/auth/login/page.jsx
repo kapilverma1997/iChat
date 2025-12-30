@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 import InputBox from "../../../components/InputBox/InputBox.jsx";
 import Button from "../../../components/Button/Button.jsx";
 import styles from "./page.module.css";
@@ -16,6 +17,7 @@ export default function LoginPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [oauthLoading, setOauthLoading] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,9 +53,45 @@ export default function LoginPage() {
     }
   };
 
+  // Check for OAuth errors in URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorParam = urlParams.get("error");
+    if (errorParam) {
+      if (errorParam === "oauth_failed") {
+        setError("OAuth authentication failed. Please try again.");
+      } else if (errorParam === "user_not_found") {
+        setError("User not found. Please register first.");
+      } else if (errorParam === "oauth_error") {
+        setError("An error occurred during OAuth authentication.");
+      }
+      // Clean up URL
+      window.history.replaceState({}, "", "/auth/login");
+    }
+  }, []);
+
+  const handleOAuthSignIn = async (provider) => {
+    setOauthLoading(provider);
+    setError("");
+    try {
+      // Directly navigate to NextAuth OAuth endpoint
+      const callbackUrl = encodeURIComponent(
+        `${window.location.origin}/auth/oauth/callback`
+      );
+      window.location.href = `/api/auth/signin/${provider}?callbackUrl=${callbackUrl}`;
+    } catch (err) {
+      console.error("OAuth sign in error:", err);
+      setError(`Failed to sign in with ${provider}. Please try again.`);
+      setOauthLoading(null);
+    }
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.card}>
+        <Link href="/" className={styles.homeButton} title="Go to Home">
+          🏠
+        </Link>
         <h1 className={styles.title}>Welcome Back</h1>
         <p className={styles.subtitle}>Sign in to your iChat account</p>
 
@@ -115,21 +153,35 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <div className={styles.divider}>
+        {/* <div className={styles.divider}>
           <span>OR</span>
-        </div>
+        </div> */}
 
-        <div className={styles.socialButtons}>
-          <Button variant="outline" className={styles.socialButton}>
-            Sign in with Google
+        {/* <div className={styles.socialButtons}>
+          <Button
+            variant="outline"
+            className={styles.socialButton}
+            onClick={() => handleOAuthSignIn("google")}
+            disabled={loading || oauthLoading !== null}
+          >
+            {oauthLoading === "google"
+              ? "Connecting..."
+              : "Sign in with Google"}
           </Button>
-          <Button variant="outline" className={styles.socialButton}>
-            Sign in with GitHub
+          <Button
+            variant="outline"
+            className={styles.socialButton}
+            onClick={() => handleOAuthSignIn("github")}
+            disabled={loading || oauthLoading !== null}
+          >
+            {oauthLoading === "github"
+              ? "Connecting..."
+              : "Sign in with GitHub"}
           </Button>
-        </div>
+        </div> */}
 
         <p className={styles.footer}>
-          Don't have an account? <Link href="/auth/register">Sign up</Link>
+          Don&apos;t have an account? <Link href="/auth/register">Sign up</Link>
         </p>
       </div>
     </div>

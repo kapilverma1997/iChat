@@ -29,11 +29,23 @@ export default function Home() {
         });
 
         if (response.ok) {
-          router.push("/chats");
+          // Check if response has content before parsing
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            try {
+              const data = await response.json();
+              if (data.user) {
+                router.push("/chats");
+              }
+            } catch (jsonError) {
+              // If JSON parsing fails, just stay on landing page
+              console.error("JSON parse error:", jsonError);
+            }
+          }
         }
       } catch (error) {
         // User not authenticated, stay on landing page
-        console.error("Auth check error:", error);
+        // Silently handle errors - don't log to avoid console noise
       }
     };
 
@@ -91,461 +103,147 @@ export default function Home() {
 
   const featureCategories = [
     {
-      title: "User & Profile Features",
+      title: "Core Messaging",
+      gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
       features: [
         {
-          title: "Registration & Login",
+          title: "Real-Time Chat",
           description:
-            "Secure user authentication with email verification and social login options",
+            "Instant messaging with typing indicators and read receipts",
+          icon: "💬",
+          color: "#667eea",
         },
         {
-          title: "Multi-Factor Authentication",
-          description:
-            "Enhanced security with 2FA and biometric authentication support",
-        },
-        {
-          title: "Profile Management",
-          description:
-            "Customizable profiles with avatars, status messages, and presence indicators",
-        },
-        {
-          title: "Themes & Customization",
-          description:
-            "Dark mode, light mode, and custom color themes for personalized experience",
-        },
-        {
-          title: "Multi-Language Support",
-          description:
-            "Localized interface supporting 50+ languages for global users",
-        },
-      ],
-    },
-    {
-      title: "1:1 Chat Features",
-      features: [
-        {
-          title: "Real-Time Messaging",
-          description:
-            "Instant message delivery with typing indicators and read receipts",
-        },
-        {
-          title: "Message Reactions",
-          description:
-            "Express yourself with emoji reactions, pins, and starred messages",
-        },
-        {
-          title: "Message Templates",
-          description:
-            "Save and reuse frequently sent messages for quick communication",
-        },
-        {
-          title: "Mute & Do Not Disturb",
-          description:
-            "Control notifications and focus on what matters with smart mute options",
-        },
-        {
-          title: "Message Search",
-          description:
-            "Powerful search to find any message by keyword, date, or sender",
-        },
-      ],
-    },
-    {
-      title: "Group Chat Features",
-      features: [
-        {
-          title: "Create & Manage Groups",
-          description:
-            "Create groups with custom names, descriptions, and avatars",
-        },
-        {
-          title: "Role-Based Permissions",
-          description:
-            "Admin, moderator, and member roles with granular permission controls",
-        },
-        {
-          title: "Threaded Messages",
-          description:
-            "Organize conversations with threaded replies and nested discussions",
-        },
-        {
-          title: "Polls & Voting",
-          description:
-            "Create polls and gather team feedback directly in group chats",
-        },
-        {
-          title: "Shared Media Library",
-          description:
-            "Centralized media gallery for all shared files and images",
-        },
-      ],
-    },
-    {
-      title: "Chat Message Types",
-      features: [
-        {
-          title: "Rich Text Formatting",
-          description:
-            "Markdown support with bold, italic, code blocks, and more",
-        },
-        {
-          title: "GIFs & Stickers",
-          description:
-            "Express yourself with animated GIFs and custom sticker packs",
+          title: "Group Chats",
+          description: "Create and manage groups with role-based permissions",
+          icon: "👥",
+          color: "#764ba2",
         },
         {
           title: "File Sharing",
-          description:
-            "Share documents, images, videos with drag-and-drop support",
+          description: "Share documents, images, and videos with drag-and-drop",
+          icon: "📎",
+          color: "#f59e0b",
         },
         {
-          title: "Location Sharing",
-          description: "Share your location in real-time with interactive maps",
-        },
-        {
-          title: "Screen Sharing",
-          description:
-            "Share your screen during video calls for seamless collaboration",
+          title: "Message Search",
+          description: "Powerful search to find any message quickly",
+          icon: "🔍",
+          color: "#10b981",
         },
       ],
     },
     {
-      title: "Advanced Messaging",
+      title: "Communication",
+      gradient: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
       features: [
         {
-          title: "Edit & Delete Messages",
-          description:
-            "Edit sent messages and delete with time-based restrictions",
+          title: "Video Calls",
+          description: "HD video calls with screen sharing support",
+          icon: "📹",
+          color: "#ef4444",
         },
         {
-          title: "Forward Messages",
-          description:
-            "Forward messages to other chats with context preservation",
+          title: "Voice Messages",
+          description: "Send and receive voice messages easily",
+          icon: "🎤",
+          color: "#8b5cf6",
         },
         {
-          title: "Scheduled Messages",
-          description: "Schedule messages to be sent at specific times",
+          title: "Polls & Voting",
+          description: "Create polls and gather team feedback",
+          icon: "📊",
+          color: "#06b6d4",
         },
         {
-          title: "Message Reminders",
-          description: "Set reminders for important messages and follow-ups",
-        },
-        {
-          title: "Multi-Select & Bulk Actions",
-          description: "Select multiple messages for bulk operations",
-        },
-        {
-          title: "Translation",
-          description:
-            "Translate messages in real-time to your preferred language",
-        },
-      ],
-    },
-    {
-      title: "File & Media Management",
-      features: [
-        {
-          title: "Cloud Storage Integration",
-          description: "Connect with Google Drive, Dropbox, and OneDrive",
-        },
-        {
-          title: "Media Preview",
-          description:
-            "Preview images, videos, and documents without leaving the chat",
-        },
-        {
-          title: "Automatic Compression",
-          description: "Smart compression to save bandwidth and storage",
-        },
-        {
-          title: "Expiration Settings",
-          description: "Set expiration dates for sensitive files and media",
-        },
-        {
-          title: "Drag & Drop Upload",
-          description: "Intuitive drag-and-drop interface for file uploads",
-        },
-      ],
-    },
-    {
-      title: "Audio/Video Calling",
-      features: [
-        {
-          title: "Group Video Calls",
-          description: "HD video calls with up to 50 participants",
-        },
-        {
-          title: "Screen Sharing",
-          description: "Share your screen during calls with annotation tools",
-        },
-        {
-          title: "Call Recording",
-          description: "Record calls with automatic transcription and storage",
-        },
-        {
-          title: "Virtual Backgrounds",
-          description:
-            "Custom backgrounds and blur effects for professional calls",
-        },
-        {
-          title: "Live Captions",
-          description: "Real-time captions and transcription during calls",
+          title: "Threaded Replies",
+          description: "Organize conversations with threaded discussions",
+          icon: "💭",
+          color: "#ec4899",
         },
       ],
     },
     {
       title: "Security & Privacy",
+      gradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
       features: [
         {
           title: "End-to-End Encryption",
-          description: "Military-grade encryption ensuring complete privacy",
+          description: "Military-grade encryption for complete privacy",
+          icon: "🔒",
+          color: "#10b981",
         },
         {
-          title: "Message Retention Policies",
-          description: "Configurable retention policies for compliance",
+          title: "Multi-Factor Auth",
+          description: "Enhanced security with 2FA support",
+          icon: "🛡️",
+          color: "#3b82f6",
         },
         {
-          title: "Screenshot Blocking",
-          description: "Prevent screenshots in sensitive conversations",
-        },
-        {
-          title: "Role-Based Access Control",
-          description: "Granular permissions for teams and organizations",
+          title: "Admin Controls",
+          description: "Comprehensive admin dashboard and user management",
+          icon: "⚙️",
+          color: "#6366f1",
         },
         {
           title: "Audit Logs",
-          description: "Comprehensive audit logs for security and compliance",
+          description: "Complete audit trail for compliance",
+          icon: "📋",
+          color: "#14b8a6",
         },
       ],
     },
+  ];
+
+  const pricingPlans = [
     {
-      title: "Notifications",
+      name: "Free",
+      price: "$0",
+      period: "forever",
+      description: "Perfect for individuals and small teams",
       features: [
-        {
-          title: "Push Notifications",
-          description: "Real-time push notifications across all devices",
-        },
-        {
-          title: "Email Notifications",
-          description: "Email digests and important message alerts",
-        },
-        {
-          title: "Notification Categories",
-          description: "Customize notification settings per chat and category",
-        },
-        {
-          title: "Snooze & Quiet Hours",
-          description: "Set quiet hours and snooze notifications",
-        },
-        {
-          title: "Custom Sounds",
-          description: "Personalize notification sounds for different contacts",
-        },
+        "Unlimited 1-on-1 chats",
+        "Group chats up to 10 members",
+        "File sharing (up to 100MB)",
+        "Basic search",
+        "Mobile & web apps",
       ],
+      cta: "Get Started",
+      popular: false,
     },
     {
-      title: "Search Features",
+      name: "Pro",
+      price: "$9",
+      period: "per month",
+      description: "Best for growing teams and businesses",
       features: [
-        {
-          title: "Keyword Search",
-          description: "Search across all messages with advanced filters",
-        },
-        {
-          title: "Filter by Sender",
-          description: "Find messages from specific contacts or groups",
-        },
-        {
-          title: "Date Range Filters",
-          description: "Search within specific date ranges",
-        },
-        {
-          title: "Saved Searches",
-          description: "Save frequently used search queries for quick access",
-        },
-        {
-          title: "Media Search",
-          description: "Search for images, videos, and files separately",
-        },
+        "Everything in Free",
+        "Unlimited group members",
+        "File sharing (up to 1GB)",
+        "Advanced search & filters",
+        "Video calls (up to 10 participants)",
+        "Admin dashboard",
+        "Priority support",
       ],
+      cta: "Start Free Trial",
+      popular: true,
     },
     {
-      title: "Admin & Organization Features",
+      name: "Enterprise",
+      price: "Custom",
+      period: "",
+      description: "For large organizations with advanced needs",
       features: [
-        {
-          title: "Admin Dashboard",
-          description: "Comprehensive dashboard with analytics and insights",
-        },
-        {
-          title: "User Management",
-          description: "Manage users, roles, and permissions from one place",
-        },
-        {
-          title: "Analytics & Reports",
-          description:
-            "Usage statistics, engagement metrics, and custom reports",
-        },
-        {
-          title: "Broadcast Messages",
-          description: "Send announcements to all team members",
-        },
-        {
-          title: "Device Management",
-          description: "Control and manage connected devices remotely",
-        },
+        "Everything in Pro",
+        "Unlimited storage",
+        "Video calls (up to 50 participants)",
+        "Advanced security & compliance",
+        "Custom integrations",
+        "Dedicated support",
+        "SLA guarantee",
       ],
-    },
-    {
-      title: "Automation & Bots",
-      features: [
-        {
-          title: "AI Reply Suggestions",
-          description: "Smart reply suggestions powered by AI",
-        },
-        {
-          title: "Message Transcription",
-          description: "Automatic transcription of voice messages",
-        },
-        {
-          title: "Auto-Moderation",
-          description: "AI-powered content moderation and filtering",
-        },
-        {
-          title: "Scheduled Messages",
-          description: "Automate message scheduling and reminders",
-        },
-        {
-          title: "Bot Integration",
-          description: "Integrate with popular bots and services",
-        },
-      ],
-    },
-    {
-      title: "Collaboration Features",
-      features: [
-        {
-          title: "Shared Notes",
-          description: "Collaborative note-taking within chats",
-        },
-        {
-          title: "Task Management",
-          description: "Create and assign tasks directly in conversations",
-        },
-        {
-          title: "Whiteboard",
-          description: "Interactive whiteboard for brainstorming sessions",
-        },
-        {
-          title: "Calendar Integration",
-          description: "Sync with Google Calendar, Outlook, and more",
-        },
-        {
-          title: "Meeting Scheduler",
-          description: "Schedule meetings and send invites from chat",
-        },
-      ],
-    },
-    {
-      title: "Localization & Customization",
-      features: [
-        {
-          title: "Custom Themes",
-          description: "Create and share custom themes with your team",
-        },
-        {
-          title: "Branding Options",
-          description:
-            "Customize logos, colors, and branding for your organization",
-        },
-        {
-          title: "Emoji Customization",
-          description: "Add custom emoji packs and reactions",
-        },
-        {
-          title: "Multi-Language UI",
-          description: "Interface available in 50+ languages",
-        },
-        {
-          title: "Regional Settings",
-          description: "Date formats, time zones, and regional preferences",
-        },
-      ],
-    },
-    {
-      title: "Data & Analytics",
-      features: [
-        {
-          title: "Usage Statistics",
-          description: "Track your messaging activity and engagement",
-        },
-        {
-          title: "Data Export",
-          description: "Export your messages and data in multiple formats",
-        },
-        {
-          title: "Engagement Heatmap",
-          description: "Visualize your most active times and contacts",
-        },
-        {
-          title: "Performance Metrics",
-          description: "Monitor app performance and response times",
-        },
-        {
-          title: "Custom Reports",
-          description: "Generate custom reports for teams and individuals",
-        },
-      ],
-    },
-    {
-      title: "Device Support",
-      features: [
-        {
-          title: "Web Application",
-          description: "Full-featured web app accessible from any browser",
-        },
-        {
-          title: "Android App",
-          description: "Native Android app with all features",
-        },
-        {
-          title: "iOS App",
-          description: "Native iOS app optimized for iPhone and iPad",
-        },
-        {
-          title: "Desktop Apps",
-          description: "Windows, macOS, and Linux desktop applications",
-        },
-        {
-          title: "Tablet Support",
-          description: "Optimized experience for tablets and large screens",
-        },
-      ],
-    },
-    {
-      title: "Performance Features",
-      features: [
-        {
-          title: "Smart Caching",
-          description: "Intelligent caching for faster load times",
-        },
-        {
-          title: "Offline Mode",
-          description: "Read and compose messages even when offline",
-        },
-        {
-          title: "Lazy Loading",
-          description:
-            "Load messages and media on-demand for better performance",
-        },
-        {
-          title: "Data Compression",
-          description: "Automatic compression to reduce bandwidth usage",
-        },
-        {
-          title: "Background Sync",
-          description:
-            "Sync messages in the background for seamless experience",
-        },
-      ],
+      cta: "Contact Sales",
+      popular: false,
     },
   ];
 
@@ -574,10 +272,22 @@ export default function Home() {
               powerful collaboration tools all in one place.
             </p>
             <div className={styles.heroActions}>
-              <Button variant="primary" size="large">
+              <Button
+                variant="primary"
+                size="large"
+                onClick={() => router.push("/auth/register")}
+              >
                 Get Started Free
               </Button>
-              <Button variant="outline" size="large">
+              <Button
+                variant="outline"
+                size="large"
+                onClick={() => {
+                  document.getElementById("features")?.scrollIntoView({
+                    behavior: "smooth",
+                  });
+                }}
+              >
                 Watch Demo
               </Button>
             </div>
@@ -589,25 +299,98 @@ export default function Home() {
       <section id="features" className={styles.features}>
         <Container>
           <SectionHeading
-            title="Everything You Need to Chat"
-            subtitle="Discover hundreds of features designed to make communication effortless and productive"
+            title="Powerful Features"
+            subtitle="Everything you need for seamless communication and collaboration"
           />
 
           {featureCategories.map((category, categoryIndex) => (
             <div key={categoryIndex} className={styles.featureCategory}>
-              <h3 className={styles.categoryTitle}>{category.title}</h3>
+              <div
+                className={styles.categoryHeader}
+                style={{ background: category.gradient }}
+              >
+                <h3 className={styles.categoryTitle}>{category.title}</h3>
+              </div>
               <div className={styles.featureGrid}>
                 {category.features.map((feature, featureIndex) => (
                   <FeatureCard
                     key={featureIndex}
                     title={feature.title}
                     description={feature.description}
-                    icon={<span className={styles.featureIcon}>✨</span>}
+                    icon={feature.icon}
+                    color={feature.color}
                   />
                 ))}
               </div>
             </div>
           ))}
+        </Container>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className={styles.pricing}>
+        <Container>
+          <SectionHeading
+            title="Simple, Transparent Pricing"
+            subtitle="Choose the perfect plan for your needs"
+          />
+
+          <div className={styles.pricingGrid}>
+            {pricingPlans.map((plan, index) => (
+              <div
+                key={index}
+                className={`${styles.pricingCard} ${
+                  plan.popular ? styles.popular : ""
+                }`}
+              >
+                {plan.popular && (
+                  <div className={styles.popularBadge}>Most Popular</div>
+                )}
+                <div className={styles.pricingHeader}>
+                  <h3 className={styles.planName}>{plan.name}</h3>
+                  <div className={styles.priceContainer}>
+                    <span className={styles.price}>{plan.price}</span>
+                    {plan.period && (
+                      <span className={styles.period}>/{plan.period}</span>
+                    )}
+                  </div>
+                  <p className={styles.planDescription}>{plan.description}</p>
+                </div>
+                <ul className={styles.featuresList}>
+                  {plan.features.map((feature, featureIndex) => (
+                    <li key={featureIndex} className={styles.featureItem}>
+                      <span className={styles.checkIcon}>✓</span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  variant={plan.popular ? "primary" : "outline"}
+                  size="large"
+                  className={styles.pricingButton}
+                  onClick={() => {
+                    if (plan.cta === "Contact Sales") {
+                      // Set category to sales and scroll to contact form
+                      setFormData((prev) => ({ ...prev, category: "sales" }));
+                      setTimeout(() => {
+                        document.getElementById("contact")?.scrollIntoView({
+                          behavior: "smooth",
+                        });
+                      }, 100);
+                    } else if (plan.cta === "Start Free Trial") {
+                      // Redirect to registration for free trial
+                      router.push("/auth/register");
+                    } else if (plan.cta === "Get Started") {
+                      // Redirect to registration
+                      router.push("/auth/register");
+                    }
+                  }}
+                >
+                  {plan.cta}
+                </Button>
+              </div>
+            ))}
+          </div>
         </Container>
       </section>
 

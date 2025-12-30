@@ -11,15 +11,20 @@ export default function AppSidebar() {
   const searchParams = useSearchParams();
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchUser();
-  }, []);
+  }, [pathname]); // Re-fetch when pathname changes (e.g., after login redirect)
 
   const fetchUser = async () => {
     try {
       const token = localStorage.getItem("accessToken");
-      if (!token) return;
+      if (!token) {
+        setLoading(false);
+        setUser(null);
+        return;
+      }
 
       const response = await fetch("/api/user/me", {
         headers: { Authorization: `Bearer ${token}` },
@@ -29,16 +34,33 @@ export default function AppSidebar() {
         const data = await response.json();
         setUser(data.user);
         setIsAdmin(data.user?.role === "admin" || data.user?.role === "owner");
+      } else {
+        setUser(null);
       }
     } catch (error) {
       console.error("Error fetching user:", error);
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Don't show sidebar on auth pages or landing page
-  const hideSidebar = pathname.startsWith("/auth") || pathname === "/";
+  // Don't show sidebar on auth pages, landing page, or public pages
+  const publicPages = ["/", "/security", "/about", "/blog", "/help", "/status"];
+  const isPublicPage = pathname.startsWith("/auth") || publicPages.includes(pathname);
+  
+  // Hide immediately on public pages
+  if (isPublicPage) {
+    return null;
+  }
 
-  if (hideSidebar) {
+  // If still loading, wait (don't hide yet - user might be logged in)
+  if (loading) {
+    return null;
+  }
+
+  // After loading, hide if no user
+  if (!user) {
     return null;
   }
 

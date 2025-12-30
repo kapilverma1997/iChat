@@ -154,7 +154,7 @@ export async function processScheduledMessages() {
       }
     }
 
-    console.log(`Processed ${scheduledMessages.length} scheduled messages`);
+    // console.log(`Processed ${scheduledMessages.length} scheduled messages`);
   } catch (error) {
     console.error('Error processing scheduled messages:', error);
   }
@@ -189,7 +189,7 @@ export async function processMessageExpiration() {
       }
     }
 
-    console.log(`Expired ${expiredMessages.length} messages`);
+    // console.log(`Expired ${expiredMessages.length} messages`);
   } catch (error) {
     console.error('Error processing message expiration:', error);
   }
@@ -242,7 +242,7 @@ export async function processFileExpiration() {
       await FileModel.findByIdAndDelete(file._id);
     }
 
-    console.log(`Deleted ${expiredFiles.length} expired files`);
+    // console.log(`Deleted ${expiredFiles.length} expired files`);
   } catch (error) {
     console.error('Error processing file expiration:', error);
   }
@@ -278,9 +278,9 @@ export async function processReminders() {
       // await reminder.save();
     }
 
-    console.log(`Processed ${reminders.length} reminders`);
+    // console.log(`Processed ${reminders.length} reminders`);
   } catch (error) {
-    console.error('Error processing reminders:', error);
+    // console.error('Error processing reminders:', error);
   }
 }
 
@@ -481,7 +481,7 @@ export async function processAutoArchive() {
       }
     }
 
-    console.log(`Archived ${inactiveChats.length} inactive chats`);
+    // console.log(`Archived ${inactiveChats.length} inactive chats`);
   } catch (error) {
     console.error('Error processing auto-archive:', error);
   }

@@ -61,7 +61,7 @@ export default function RegisterPage() {
       localStorage.setItem("user", JSON.stringify(data.user));
 
       // Redirect to dashboard
-      router.push("/dashboard");
+      router.push("/chats");
     } catch (err) {
       setError(err.message || "Registration failed");
     } finally {
@@ -72,6 +72,9 @@ export default function RegisterPage() {
   return (
     <div className={styles.container}>
       <div className={styles.card}>
+        <Link href="/" className={styles.homeButton} title="Go to Home">
+          🏠
+        </Link>
         <h1 className={styles.title}>Create Account</h1>
         <p className={styles.subtitle}>Join iChat and start chatting</p>
 
@@ -161,7 +164,7 @@ export default function RegisterPage() {
           </Button>
         </form>
 
-        <div className={styles.divider}>
+        {/* <div className={styles.divider}>
           <span>OR</span>
         </div>
 
@@ -172,7 +175,7 @@ export default function RegisterPage() {
           <Button variant="outline" className={styles.socialButton}>
             Sign up with GitHub
           </Button>
-        </div>
+        </div> */}
 
         <p className={styles.footer}>
           Already have an account? <Link href="/auth/login">Sign in</Link>
