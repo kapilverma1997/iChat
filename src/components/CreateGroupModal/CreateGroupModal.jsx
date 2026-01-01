@@ -239,4 +239,3 @@ export default function CreateGroupModal({ isOpen, onClose, onCreateGroup }) {
     </Modal>
   );
 }
-

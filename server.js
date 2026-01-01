@@ -5,7 +5,9 @@ import { initSocket } from './lib/socket.js';
 import './scripts/cronJobs.js'; // Start cron jobs
 
 const dev = process.env.NODE_ENV !== 'production';
-const hostname = process.env.HOSTNAME || 'localhost';
+// Use '0.0.0.0' to accept connections from any network interface
+// This allows connections from other devices on the same network
+const hostname = process.env.HOSTNAME || (dev ? '0.0.0.0' : 'localhost');
 const port = parseInt(process.env.PORT || '3000', 10);
 
 const app = next({ dev, hostname, port });
@@ -26,8 +28,13 @@ app.prepare().then(() => {
   // Initialize Socket.io
   initSocket(httpServer);
 
-  httpServer.listen(port, (err) => {
+  httpServer.listen(port, hostname, (err) => {
     if (err) throw err;
-    console.log(`> Ready on http://${hostname}:${port}`);
+    if (hostname === '0.0.0.0') {
+      console.log(`> Ready on http://localhost:${port}`);
+      console.log(`> Network access: http://[your-ip]:${port}`);
+    } else {
+      console.log(`> Ready on http://${hostname}:${port}`);
+    }
   });
 });

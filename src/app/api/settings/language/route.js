@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getAuthenticatedUser } from '../../../lib/auth.js';
-import LanguagePreferences from '../../../../models/LanguagePreferences.js';
-import User from '../../../../models/User.js';
-import { getIO } from '../../../../lib/socket.js';
-import connectDB from '../../../../lib/mongodb.js';
+import { getAuthenticatedUser } from '../../../../../lib/auth.js';
+import LanguagePreferences from '../../../../../models/LanguagePreferences.js';
+import User from '../../../../../models/User.js';
+import { getIO } from '../../../../../lib/socket.js';
+import connectDB from '../../../../../lib/mongodb.js';
 
 export async function GET(request) {
   try {

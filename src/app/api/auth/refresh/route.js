@@ -48,7 +48,7 @@ export async function POST(request) {
 
     // Update refresh token in database
     session.token = newRefreshToken;
-    session.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    session.expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year for permanent login
     await session.save();
 
     return NextResponse.json({

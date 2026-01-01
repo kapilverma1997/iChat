@@ -14,6 +14,7 @@ import ScheduleMessageModal from "../../components/ScheduleMessageModal/Schedule
 import ReminderModal from "../../components/ReminderModal/ReminderModal.jsx";
 import { useSocket } from "../../hooks/useSocket.js";
 import { usePresence } from "../../hooks/usePresence.js";
+import { useToastNotifications } from "../../hooks/useToastNotifications.js";
 import styles from "./page.module.css";
 
 export default function DashboardPage() {
@@ -40,6 +41,7 @@ export default function DashboardPage() {
   const typingTimeoutRef = useRef({});
 
   usePresence();
+  useToastNotifications(); // Enable real-time toast notifications
 
   useEffect(() => {
     fetchUser();
@@ -213,6 +215,52 @@ export default function DashboardPage() {
     }
   };
 
+  const markMessagesAsRead = useCallback(
+    async (messageIds, chatId) => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return;
+
+        const response = await fetch("/api/messages/mark-read", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            messageIds,
+            chatId,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          // Update messages with readBy information
+          if (data.messages && data.messages.length > 0) {
+            setMessages((prev) =>
+              prev.map((msg) => {
+                const updatedMessage = data.messages.find(
+                  (updatedMsg) =>
+                    updatedMsg._id?.toString() === msg._id?.toString()
+                );
+                if (updatedMessage) {
+                  return {
+                    ...msg,
+                    readBy: updatedMessage.readBy || msg.readBy,
+                  };
+                }
+                return msg;
+              })
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Error marking messages as read:", error);
+      }
+    },
+    []
+  );
+
   const handleReceiveMessage = useCallback(
     (data) => {
       console.log("Received message via socket:", data);
@@ -222,9 +270,12 @@ export default function DashboardPage() {
 
       // If this message is for the currently active chat, add it to messages
       if (activeChat && receivedChatId === currentChatId) {
+        const messageId = data.message?._id?.toString();
+        const senderId = data.message?.senderId?._id?.toString() || data.message?.senderId?.toString();
+        const currentUserId = user?._id?.toString();
+
+        // Check if message already exists to avoid duplicates
         setMessages((prev) => {
-          // Check if message already exists to avoid duplicates
-          const messageId = data.message?._id?.toString();
           if (!messageId) return prev;
 
           const exists = prev.some((msg) => {
@@ -240,6 +291,12 @@ export default function DashboardPage() {
           console.log("Adding new message to active chat:", messageId);
           return [...prev, data.message];
         });
+
+        // If message is not sent by current user and chat is active, mark it as read immediately
+        if (messageId && senderId && currentUserId && senderId !== currentUserId) {
+          console.log("Marking incoming message as read in real-time:", messageId);
+          markMessagesAsRead([messageId], receivedChatId);
+        }
       } else {
         // Message received for a different chat - refresh messages if user switches to it
         console.log("Message received for different chat:", receivedChatId);
@@ -253,7 +310,7 @@ export default function DashboardPage() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activeChat, showArchived]
+    [activeChat, showArchived, user, markMessagesAsRead]
   );
 
   const handleTyping = useCallback(
@@ -383,6 +440,44 @@ export default function DashboardPage() {
     [activeChat]
   );
 
+  const handleReadReceipts = useCallback(
+    (data) => {
+      if (
+        activeChat &&
+        data.chatId?.toString() === activeChat._id?.toString()
+      ) {
+        // Handle both new format (with messages array) and old format
+        if (data.messages && Array.isArray(data.messages) && data.messages.length > 0) {
+          // Update messages with new readBy information
+          setMessages((prev) =>
+            prev.map((msg) => {
+              // Find if this message was updated with read receipt
+              const updatedMessage = data.messages.find(
+                (updatedMsg) =>
+                  updatedMsg._id?.toString() === msg._id?.toString()
+              );
+              if (updatedMessage) {
+                // Merge the updated readBy array into the existing message
+                return {
+                  ...msg,
+                  readBy: updatedMessage.readBy || msg.readBy,
+                };
+              }
+              return msg;
+            })
+          );
+        } else {
+          // Old format or no messages array - refresh messages to get updated readBy
+          // This is a fallback for backward compatibility
+          if (activeChat?._id) {
+            fetchMessages(activeChat._id);
+          }
+        }
+      }
+    },
+    [activeChat]
+  );
+
   useEffect(() => {
     if (!socket || !connected) return;
 
@@ -396,6 +491,8 @@ export default function DashboardPage() {
     socket.on("message:deleteEveryone", handleMessageDeleteForEveryone);
     socket.on("reactionAdded", handleReactionAdded);
     socket.on("messageUpdated", handleMessageUpdated);
+    socket.on("messages:readReceipts", handleReadReceipts);
+    socket.on("messages:read", handleReadReceipts); // Also listen for backward compatibility
 
     return () => {
       socket.off("receiveMessage", handleReceiveMessage);
@@ -407,6 +504,8 @@ export default function DashboardPage() {
       socket.off("message:deleteEveryone", handleMessageDeleteForEveryone);
       socket.off("reactionAdded", handleReactionAdded);
       socket.off("messageUpdated", handleMessageUpdated);
+      socket.off("messages:readReceipts", handleReadReceipts);
+      socket.off("messages:read", handleReadReceipts);
     };
   }, [
     socket,
@@ -419,6 +518,7 @@ export default function DashboardPage() {
     handleMessageDeleteForEveryone,
     handleReactionAdded,
     handleMessageUpdated,
+    handleReadReceipts,
   ]);
 
   // Leave previous chat when switching

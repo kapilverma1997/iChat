@@ -23,10 +23,30 @@ export default function VoiceRecorder({ onRecordingComplete, onCancel }) {
     };
   }, [audioUrl]);
 
+  const getSupportedMimeType = () => {
+    const types = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/ogg;codecs=opus',
+      'audio/mp4',
+      'audio/mpeg',
+    ];
+    
+    for (const type of types) {
+      if (MediaRecorder.isTypeSupported(type)) {
+        return type;
+      }
+    }
+    return 'audio/webm'; // fallback
+  };
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const mimeType = getSupportedMimeType();
+      const options = { mimeType };
+      
+      const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -37,8 +57,9 @@ export default function VoiceRecorder({ onRecordingComplete, onCancel }) {
       };
 
       mediaRecorder.onstop = () => {
+        const mimeType = mediaRecorder.mimeType || 'audio/webm';
         const audioBlob = new Blob(audioChunksRef.current, {
-          type: "audio/webm",
+          type: mimeType,
         });
         const url = URL.createObjectURL(audioBlob);
         setAudioBlob(audioBlob);
@@ -129,7 +150,13 @@ export default function VoiceRecorder({ onRecordingComplete, onCancel }) {
 
       {audioBlob && !isRecording && (
         <div className={styles.preview}>
-          <audio src={audioUrl} controls className={styles.audioPlayer} />
+          <audio 
+            src={audioUrl} 
+            controls 
+            preload="metadata"
+            className={styles.audioPlayer}
+            style={{ display: 'block', width: '100%' }}
+          />
           <div className={styles.actions}>
             <button className={styles.sendButton} onClick={handleSend}>
               Send

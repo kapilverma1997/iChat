@@ -27,9 +27,21 @@ export async function POST(request) {
     // Ensure content is always a string, default to empty string
     const messageContent = (content !== null && content !== undefined) ? String(content) : '';
 
+    // Validate message type against schema enum
+    const validTypes = ['text', 'image', 'video', 'file', 'audio', 'voice', 'location', 'contact', 'poll', 'event', 'system', 'code', 'markdown', 'emoji'];
+    if (!validTypes.includes(messageType)) {
+      return NextResponse.json({ error: `Invalid message type: ${messageType}` }, { status: 400 });
+    }
+
     // Only require content if it's a text message without a file
+    // Code and markdown messages also require content
     if (!messageContent && !['emoji', 'location', 'contact', 'image', 'video', 'file', 'audio', 'voice'].includes(messageType) && !fileUrl) {
       return NextResponse.json({ error: 'Content is required' }, { status: 400 });
+    }
+    
+    // Code and markdown messages must have content
+    if (['code', 'markdown'].includes(messageType) && !messageContent.trim()) {
+      return NextResponse.json({ error: 'Content is required for code and markdown messages' }, { status: 400 });
     }
 
     const group = await Group.findById(groupId);

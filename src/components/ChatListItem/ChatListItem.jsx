@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Avatar from "../Avatar/Avatar.jsx";
+import { parseMarkdown } from "../../lib/markdown.js";
 import styles from "./ChatListItem.module.css";
 
 export default function ChatListItem({
@@ -84,9 +85,12 @@ export default function ChatListItem({
           <span className={styles.time}>{formatTime(chat.lastMessageAt)}</span>
         </div>
         <div className={styles.footer}>
-          <span className={styles.lastMessage}>
-            {lastMessage?.content || ""}
-          </span>
+          <span
+            className={styles.lastMessage}
+            dangerouslySetInnerHTML={{
+              __html: parseMarkdown(lastMessage?.content || ""),
+            }}
+          />
           {unreadCount > 0 && (
             <span className={styles.unreadBadge}>{unreadCount}</span>
           )}

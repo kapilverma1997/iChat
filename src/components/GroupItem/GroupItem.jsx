@@ -32,6 +32,36 @@ export default function GroupItem({ group, isActive, onClick }) {
     return "🌐";
   };
 
+  const stripMarkdown = (text) => {
+    if (!text) return "";
+    let plainText = text;
+
+    // Remove code blocks (```code```)
+    plainText = plainText.replace(/```[\s\S]*?```/g, "");
+
+    // Remove inline code (`code`)
+    plainText = plainText.replace(/`([^`]+)`/g, "$1");
+
+    // Remove underline (__text__) - must be before bold to avoid conflict
+    plainText = plainText.replace(/__(.+?)__/g, "$1");
+
+    // Remove bold (**text**)
+    plainText = plainText.replace(/\*\*(.+?)\*\*/g, "$1");
+
+    // Remove italic (*text* or _text_)
+    plainText = plainText.replace(/\*(.+?)\*/g, "$1");
+    plainText = plainText.replace(/_(.+?)_/g, "$1");
+
+    // Remove links [text](url) - keep just the text
+    plainText = plainText.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+
+    // Remove list markers
+    plainText = plainText.replace(/^[\-\*]\s+/gm, "");
+    plainText = plainText.replace(/^\d+\.\s+/gm, "");
+
+    return plainText.trim();
+  };
+
   const lastMessage = group.lastMessage;
   const memberCount = group.memberCount || group.members?.length || 0;
 
@@ -40,23 +70,19 @@ export default function GroupItem({ group, isActive, onClick }) {
       className={`${styles.item} ${isActive ? styles.active : ""}`}
       onClick={onClick}
     >
-      <Avatar
-        src={group.groupPhoto}
-        name={group.name}
-        size="medium"
-      />
+      <Avatar src={group.groupPhoto} name={group.name} size="medium" />
       <div className={styles.content}>
         <div className={styles.header}>
           <span className={styles.name}>
             {getGroupTypeBadge()} {group.name}
           </span>
-          <span className={styles.time}>
-            {formatTime(group.lastMessageAt)}
-          </span>
+          <span className={styles.time}>{formatTime(group.lastMessageAt)}</span>
         </div>
         <div className={styles.footer}>
           <span className={styles.lastMessage}>
-            {lastMessage?.content || "No messages yet"}
+            {lastMessage?.content
+              ? stripMarkdown(lastMessage.content)
+              : "No messages yet"}
           </span>
           <span className={styles.memberCount}>{memberCount} members</span>
         </div>
@@ -64,4 +90,3 @@ export default function GroupItem({ group, isActive, onClick }) {
     </div>
   );
 }
-

@@ -2,6 +2,8 @@
 
 import { usePathname } from "next/navigation";
 import AppSidebar from "../AppSidebar/AppSidebar.jsx";
+import { ToastProvider } from "../../contexts/ToastContext";
+import ToastContainer from "../ToastContainer/ToastContainer";
 import styles from "./AppLayout.module.css";
 
 export default function AppLayout({ children }) {
@@ -13,12 +15,15 @@ export default function AppLayout({ children }) {
     publicPages.includes(pathname);
 
   return (
-    <div className={styles.appContainer}>
-      <AppSidebar />
-      <main className={`${styles.mainContent} ${hideSidebar ? styles.fullWidth : ""}`}>
-        {children}
-      </main>
-    </div>
+    <ToastProvider>
+      <div className={styles.appContainer}>
+        <AppSidebar />
+        <main className={`${styles.mainContent} ${hideSidebar ? styles.fullWidth : ""}`}>
+          {children}
+        </main>
+        <ToastContainer />
+      </div>
+    </ToastProvider>
   );
 }
 

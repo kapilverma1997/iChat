@@ -50,7 +50,7 @@ export async function POST(request) {
       userId: user._id,
       token: refreshToken,
       type: 'refresh',
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year for permanent login
       ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
       userAgent: request.headers.get('user-agent') || undefined,
     });

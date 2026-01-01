@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import styles from "./CameraCapture.module.css";
 
 export default function CameraCapture({ onCapture, onCancel }) {
@@ -13,15 +13,45 @@ export default function CameraCapture({ onCapture, onCancel }) {
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
 
-  useEffect(() => {
-    startCamera();
-    return () => {
-      stopCamera();
-    };
-  }, []);
+  const stopCamera = useCallback(() => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  }, [stream, isRecording]);
 
-  const startCamera = async () => {
+  const startCamera = useCallback(async () => {
     try {
+      // Check if we're in a browser environment and mediaDevices is available
+      if (typeof window === "undefined") {
+        console.warn("Camera API: Not in browser environment");
+        return;
+      }
+
+      if (!navigator?.mediaDevices?.getUserMedia) {
+        const isLocalhost =
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1" ||
+          window.location.hostname === "";
+        const isHTTPS = window.location.protocol === "https:";
+
+        if (!isLocalhost && !isHTTPS) {
+          alert(
+            "Camera access requires HTTPS or localhost. Please use HTTPS or run on localhost."
+          );
+        } else {
+          alert(
+            "Camera API is not available in your browser. Please check your browser permissions and ensure your device has a camera."
+          );
+        }
+        onCancel?.();
+        return;
+      }
+
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user" },
         audio: mode === "video",
@@ -32,21 +62,29 @@ export default function CameraCapture({ onCapture, onCancel }) {
       }
     } catch (error) {
       console.error("Error accessing camera:", error);
-      alert("Could not access camera. Please check permissions.");
+      const errorMessage =
+        error.name === "NotAllowedError"
+          ? "Camera permission denied. Please allow camera access and try again."
+          : error.name === "NotFoundError"
+          ? "No camera found. Please ensure your device has a camera connected."
+          : `Could not access camera: ${error.message}. Please check permissions and ensure you're using HTTPS or localhost.`;
+      alert(errorMessage);
       onCancel?.();
     }
-  };
+  }, [mode, onCancel]);
 
-  const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      setStream(null);
+  useEffect(() => {
+    // Only start camera if we're in the browser and mediaDevices is available
+    if (
+      typeof window !== "undefined" &&
+      navigator?.mediaDevices?.getUserMedia
+    ) {
+      startCamera();
     }
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
+    return () => {
+      stopCamera();
+    };
+  }, [startCamera, stopCamera]);
 
   const capturePhoto = () => {
     if (videoRef.current && canvasRef.current) {

@@ -5,7 +5,7 @@ import Chat from '../../../../../models/Chat.js';
 import Message from '../../../../../models/Message.js';
 import { getIO } from '../../../../../lib/socket.js';
 
-export async function GET(request) {
+export async function POST(request) {
   try {
     await connectDB();
 
@@ -14,13 +14,20 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const chatId = searchParams.get('chatId');
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const { messageIds, chatId } = await request.json();
+
+    if (!messageIds || !Array.isArray(messageIds) || messageIds.length === 0) {
+      return NextResponse.json(
+        { error: 'Message IDs array is required' },
+        { status: 400 }
+      );
+    }
 
     if (!chatId) {
-      return NextResponse.json({ error: 'Chat ID is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Chat ID is required' },
+        { status: 400 }
+      );
     }
 
     // Verify user is participant in chat
@@ -33,33 +40,10 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
     }
 
-    // Get messages - exclude messages deleted for this user
-    const messages = await Message.find({
-      chatId,
-      isDeleted: false,
-      $or: [
-        { deletedFor: { $exists: false } },
-        { deletedFor: { $size: 0 } },
-        { deletedFor: { $nin: [user._id] } },
-      ],
-    })
-      .populate('senderId', 'name email profilePhoto')
-      .populate('replyTo')
-      .populate({
-        path: 'quotedMessage',
-        populate: {
-          path: 'senderId',
-          select: 'name email profilePhoto'
-        }
-      })
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .skip((page - 1) * limit)
-      .lean();
-
-    // Mark messages as read
-    const unreadMessages = await Message.updateMany(
+    // Mark messages as read (only messages not sent by the current user)
+    const result = await Message.updateMany(
       {
+        _id: { $in: messageIds },
         chatId,
         senderId: { $ne: user._id },
         'readBy.userId': { $ne: user._id },
@@ -76,12 +60,13 @@ export async function GET(request) {
     );
 
     // If messages were marked as read, notify the sender(s) via socket
-    if (unreadMessages.modifiedCount > 0) {
+    if (result.modifiedCount > 0) {
       try {
         const io = getIO();
         if (io) {
           // Get the messages that were just marked as read with full details
           const readMessages = await Message.find({
+            _id: { $in: messageIds },
             chatId,
             senderId: { $ne: user._id },
             'readBy.userId': user._id,
@@ -122,20 +107,39 @@ export async function GET(request) {
         console.error('Socket error when emitting read receipts:', socketError);
         // Don't fail the request if socket fails
       }
+
+      // Reset unread count for this user
+      chat.unreadCount.set(user._id.toString(), 0);
+      await chat.save();
     }
 
-    // Reset unread count
-    chat.unreadCount.set(user._id.toString(), 0);
-    await chat.save();
+    // Get updated messages with readBy information
+    const updatedMessages = await Message.find({
+      _id: { $in: messageIds },
+      chatId,
+    })
+      .populate('senderId', 'name email profilePhoto')
+      .populate('replyTo')
+      .populate({
+        path: 'quotedMessage',
+        populate: {
+          path: 'senderId',
+          select: 'name email profilePhoto'
+        }
+      })
+      .lean();
 
     return NextResponse.json({
-      messages: messages.reverse(),
-      page,
-      limit,
-      total: messages.length,
+      success: true,
+      messages: updatedMessages,
+      modifiedCount: result.modifiedCount,
     });
   } catch (error) {
-    console.error('List messages error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Mark messages as read error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
+

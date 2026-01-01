@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import styles from "./Modal.module.css";
 
-export default function Modal({ isOpen, onClose, children, title }) {
+export default function Modal({ isOpen, onClose, children, title, className }) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -19,7 +19,7 @@ export default function Modal({ isOpen, onClose, children, title }) {
 
   return (
     <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div className={`${styles.modal} ${className || ""}`} onClick={(e) => e.stopPropagation()}>
         {title && (
           <div className={styles.header}>
             <h2>{title}</h2>

@@ -5,6 +5,7 @@ import Chat from '../../../../../models/Chat.js';
 import Message from '../../../../../models/Message.js';
 import MessageLog from '../../../../../models/MessageLog.js';
 import { getIO } from '../../../../../lib/socket.js';
+import { notifyNewMessage } from '../../../../../lib/notifications.js';
 
 export async function POST(request) {
   try {
@@ -143,14 +144,53 @@ export async function POST(request) {
           }
         }
         // Emit both old and new event names for compatibility
+        // Emit to chat room (for users who have joined the chat)
         io.to(`chat:${chatId}`).emit('receiveMessage', {
           message: messageObj,
           chatId: chatId.toString(),
         });
+        console.log(`Emitting message:new to chat:${chatId} room`);
         io.to(`chat:${chatId}`).emit('message:new', {
           message: messageObj,
           chatId: chatId.toString(),
         });
+
+        // Also emit to user-specific rooms as a fallback
+        // This ensures delivery even if the recipient hasn't joined the chat room yet
+        const senderName = user.name || user.email || 'Someone';
+        const messageContent = content || (type === 'file' ? fileName : 'Sent a message');
+
+        chat.participants.forEach((participantId) => {
+          if (participantId.toString() !== user._id.toString()) {
+            console.log("Sending message to user__", participantId.toString());
+            io.to(`user:${participantId.toString()}`).emit('message:new', {
+              message: messageObj,
+              chatId: chatId.toString(),
+            });
+            io.to(`user:${participantId.toString()}`).emit('receiveMessage', {
+              message: messageObj,
+              chatId: chatId.toString(),
+            });
+            // Emit notification event for toast notifications
+            io.to(`user:${participantId.toString()}`).emit('notification:new', {
+              notification: {
+                _id: messageObj._id,
+                type: 'message',
+                category: 'direct_messages',
+                title: `New message from ${senderName}`,
+                body: messageContent.length > 100 ? messageContent.substring(0, 100) + '...' : messageContent,
+                chatId: chatId.toString(),
+                messageId: messageObj._id,
+                data: {
+                  senderName,
+                  messageContent,
+                },
+                createdAt: new Date(),
+              },
+            });
+          }
+        });
+
         if (quotedMessage) {
           io.to(`chat:${chatId}`).emit('message:quote', {
             messageId: message._id.toString(),
@@ -158,7 +198,7 @@ export async function POST(request) {
             chatId: chatId.toString(),
           });
         }
-        console.log(`Emitted message to chat:${chatId}`);
+        console.log(`Emitted message to chat:${chatId} and user rooms for ${chat.participants.length} participants`);
       } else {
         console.warn('Socket.io not available, message saved but not broadcasted');
       }

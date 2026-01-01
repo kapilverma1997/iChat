@@ -70,6 +70,10 @@
   flex: 1;
 }
 
+.lastMessage strong {
+  font-weight: 600;
+}
+
 .unreadBadge {
   background: #667eea;
   color: white;

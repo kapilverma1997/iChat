@@ -41,7 +41,8 @@ export default function GroupMessageInput({
   const MAX_AUDIO_SIZE = 100 * 1024 * 1024; // 100MB for audio
 
   const canSend = hasPermission(userRole, "canSendMessage");
-  const isReadOnly = group.settings?.readOnly && !hasPermission(userRole, "canChangeGroupInfo");
+  const isReadOnly =
+    group.settings?.readOnly && !hasPermission(userRole, "canChangeGroupInfo");
 
   useEffect(() => {
     return () => {
@@ -94,7 +95,10 @@ export default function GroupMessageInput({
 
       typingTimeoutRef.current = setTimeout(() => {
         if (socket && group?._id) {
-          socket.emit("groupStopTyping", { groupId: group._id, userId: "current" });
+          socket.emit("groupStopTyping", {
+            groupId: group._id,
+            userId: "current",
+          });
         }
       }, 1000);
     }
@@ -151,7 +155,7 @@ export default function GroupMessageInput({
         const fileUrl = data.file.url;
         const fileName = data.file.metadata.name;
         const fileSize = data.file.metadata.size;
-        
+
         // Determine message type
         let messageType = type || "file";
         if (!type || type === "file") {
@@ -166,17 +170,12 @@ export default function GroupMessageInput({
           }
         }
 
-        await onSend(
-          content || "",
-          replyTo?._id,
-          messageType,
-          {
-            fileUrl,
-            fileName,
-            fileSize,
-            metadata: data.file.metadata || {},
-          }
-        );
+        await onSend(content || "", replyTo?._id, messageType, {
+          fileUrl,
+          fileName,
+          fileSize,
+          metadata: data.file.metadata || {},
+        });
         return data;
       } else {
         const errorData = await response
@@ -236,7 +235,7 @@ export default function GroupMessageInput({
     if (!canSend || isReadOnly) return;
 
     const messageContent = additionalData?.content?.trim() || content.trim();
-    
+
     // Don't send if no content and no files (allow contact and location messages)
     if (
       !messageContent &&
@@ -447,16 +446,16 @@ export default function GroupMessageInput({
   if (!canSend || isReadOnly) {
     return (
       <div className={styles.readOnly}>
-        {isReadOnly ? "Group is in read-only mode" : "You do not have permission to send messages"}
+        {isReadOnly
+          ? "Group is in read-only mode"
+          : "You do not have permission to send messages"}
       </div>
     );
   }
 
   return (
     <div className={styles.container}>
-      {replyTo && (
-        <ReplyPreview message={replyTo} onClose={onCancelReply} />
-      )}
+      {replyTo && <ReplyPreview message={replyTo} onClose={onCancelReply} />}
 
       {/* Error message */}
       {errorMessage && (
@@ -634,48 +633,46 @@ export default function GroupMessageInput({
           </button>
         </div>
 
-        <div className={styles.inputRow}>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            style={{ display: "none" }}
-            onChange={handleFileSelect}
-            accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-          />
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          style={{ display: "none" }}
+          onChange={handleFileSelect}
+          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+        />
 
-          <button
-            className={styles.emojiButton}
-            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-            title="Emoji"
-          >
-            😊
-          </button>
+        <button
+          className={styles.emojiButton}
+          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+          title="Emoji"
+        >
+          😊
+        </button>
 
-          <textarea
-            ref={inputRef}
-            className={styles.input}
-            value={content}
-            onChange={handleInputChange}
-            onKeyPress={handleKeyPress}
-            placeholder={
-              isCodeMode
-                ? "Enter code..."
-                : isMarkdownMode
-                ? "Type markdown..."
-                : "Type a message... Use @username to mention"
-            }
-            rows={1}
-          />
+        <textarea
+          ref={inputRef}
+          className={styles.input}
+          value={content}
+          onChange={handleInputChange}
+          onKeyPress={handleKeyPress}
+          placeholder={
+            isCodeMode
+              ? "Enter code..."
+              : isMarkdownMode
+              ? "Type markdown..."
+              : "Type a message... Use @username to mention"
+          }
+          rows={1}
+        />
 
-          <button
-            className={styles.sendButton}
-            onClick={() => handleSend()}
-            disabled={!content.trim() && selectedFiles.length === 0}
-          >
-            Send
-          </button>
-        </div>
+        <button
+          className={styles.sendButton}
+          onClick={() => handleSend()}
+          disabled={!content.trim() && selectedFiles.length === 0}
+        >
+          Send
+        </button>
       </div>
 
       {showEmojiPicker && (
@@ -688,4 +685,3 @@ export default function GroupMessageInput({
     </div>
   );
 }
-

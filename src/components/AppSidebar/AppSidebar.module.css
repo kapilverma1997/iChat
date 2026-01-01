@@ -81,6 +81,25 @@
   stroke: #ffffff;
 }
 
+.profileImage {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #5a3d7a 0%, #4a2d6a 100%);
+  display: block;
+}
+
+.navItem.active .profileImage {
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
+}
+
+.iconWrapper .profileImage {
+  margin: 0;
+}
+
 .label {
   font-size: 11px;
   font-weight: 500;
@@ -161,6 +180,11 @@
   .iconWrapper svg {
     width: 20px;
     height: 20px;
+  }
+
+  .profileImage {
+    width: 28px;
+    height: 28px;
   }
 
   .label {

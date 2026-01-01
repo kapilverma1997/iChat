@@ -232,10 +232,11 @@ export default function MessageItem({
     if (!isOwn) return null;
     const readCount = message.readBy?.length || 0;
     const participantsCount = 2; // For 1:1 chat
-    if (readCount >= participantsCount - 1) {
-      return "✓✓"; // Double tick - read
-    }
-    return "✓"; // Single tick - sent
+    const isRead = readCount >= participantsCount - 1;
+    return {
+      text: isRead ? "✓✓" : "✓",
+      isRead: isRead
+    };
   };
 
   const renderMessageContent = () => {
@@ -288,21 +289,24 @@ export default function MessageItem({
       case "voice":
       case "audio":
         return (
-          <>
-            {fileUrl && (
-              <div className={styles.audioMessage}>
-                <audio src={fileUrl} controls className={styles.audioPlayer} />
-                {content && content.trim() && (
-                  <div className={styles.text}>
-                    🎵🎵🎵🎵🎵 Voice message 🎵🎵🎵🎵🎵
-                  </div>
-                )}
+          <div className={styles.audioMessage}>
+            {fileUrl ? (
+              <audio 
+                src={fileUrl} 
+                controls 
+                preload="metadata"
+                className={styles.audioPlayer}
+              />
+            ) : (
+              <div className={styles.audioPlaceholder}>
+                <span className={styles.audioIcon}>🎤</span>
+                <span>Voice message</span>
               </div>
             )}
-            {!fileUrl && content && (
-              <div className={styles.text}>🎵 Voice message</div>
+            {content && content.trim() && content !== "Voice message" && (
+              <div className={styles.audioCaption}>{content}</div>
             )}
-          </>
+          </div>
         );
 
       case "file":
@@ -508,9 +512,15 @@ export default function MessageItem({
               {message.edited && (
                 <span className={styles.editedLabel}>(edited)</span>
               )}
-              {isOwn && (
-                <span className={styles.readStatus}>{getReadStatus()}</span>
-              )}
+              {isOwn && (() => {
+                const readStatus = getReadStatus();
+                if (!readStatus) return null;
+                return (
+                  <span className={`${styles.readStatus} ${readStatus.isRead ? styles.read : styles.sent}`}>
+                    {readStatus.text}
+                  </span>
+                );
+              })()}
             </div>
           </>
         )}

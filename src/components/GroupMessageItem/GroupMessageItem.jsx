@@ -54,8 +54,13 @@ export default function GroupMessageItem({
                 className={styles.image}
               />
             )}
-            {message.content && (
-              <div className={styles.text}>{message.content}</div>
+            {message.content && message.content.trim() && (
+              <div
+                className={styles.text}
+                dangerouslySetInnerHTML={{
+                  __html: parseMarkdown(message.content),
+                }}
+              />
             )}
           </>
         );
@@ -65,8 +70,13 @@ export default function GroupMessageItem({
             {message.fileUrl && (
               <video src={message.fileUrl} controls className={styles.video} />
             )}
-            {message.content && (
-              <div className={styles.text}>{message.content}</div>
+            {message.content && message.content.trim() && (
+              <div
+                className={styles.text}
+                dangerouslySetInnerHTML={{
+                  __html: parseMarkdown(message.content),
+                }}
+              />
             )}
           </>
         );
@@ -76,9 +86,38 @@ export default function GroupMessageItem({
             <a href={message.fileUrl} download={message.fileName}>
               📎 {message.fileName} ({(message.fileSize / 1024).toFixed(2)} KB)
             </a>
-            {message.content && (
-              <div className={styles.text}>{message.content}</div>
+            {message.content && message.content.trim() && (
+              <div
+                className={styles.text}
+                dangerouslySetInnerHTML={{
+                  __html: parseMarkdown(message.content),
+                }}
+              />
             )}
+          </div>
+        );
+      case "voice":
+      case "audio":
+        return (
+          <div className={styles.audioMessage}>
+            {message.fileUrl ? (
+              <audio
+                src={message.fileUrl}
+                controls
+                preload="metadata"
+                className={styles.audioPlayer}
+              />
+            ) : (
+              <div className={styles.audioPlaceholder}>
+                <span className={styles.audioIcon}>🎤</span>
+                <span>Voice message</span>
+              </div>
+            )}
+            {message.content &&
+              message.content.trim() &&
+              message.content !== "Voice message" && (
+                <div className={styles.audioCaption}>{message.content}</div>
+              )}
           </div>
         );
       case "poll":
@@ -143,6 +182,19 @@ export default function GroupMessageItem({
             </div>
           </div>
         );
+      case "code":
+        return (
+          <div className={styles.codeMessage}>
+            <pre className={styles.codeBlock}>
+              <code>{message.content}</code>
+            </pre>
+            {message.metadata?.language && (
+              <div className={styles.codeLanguage}>
+                {message.metadata.language}
+              </div>
+            )}
+          </div>
+        );
       case "markdown":
         const urls = extractUrls(message.content || "");
         const textWithoutUrls =
@@ -165,8 +217,29 @@ export default function GroupMessageItem({
             ))}
           </div>
         );
+      case "text":
       default:
-        return <div className={styles.text}>{message.content}</div>;
+        const textUrls = extractUrls(message.content || "");
+        const hasTextUrls = textUrls.length > 0;
+        const textContent = hasTextUrls
+          ? message.content.replace(/https?:\/\/[^\s]+/g, "").trim()
+          : message.content;
+
+        return (
+          <>
+            {textContent && (
+              <div
+                className={styles.text}
+                dangerouslySetInnerHTML={{
+                  __html: parseMarkdown(textContent),
+                }}
+              />
+            )}
+            {textUrls.map((url, index) => (
+              <LinkPreview key={index} url={url} />
+            ))}
+          </>
+        );
     }
   };
 

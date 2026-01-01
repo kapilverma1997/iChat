@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getAuthenticatedUser } from '../../../lib/auth.js';
-import Branding from '../../../../models/Branding.js';
-import { isAdmin } from '../../../../lib/adminAuth.js';
-import connectDB from '../../../../lib/mongodb.js';
+import { getAuthenticatedUser } from '../../../../../lib/auth.js';
+import Branding from '../../../../../models/Branding.js';
+import { isAdmin } from '../../../../../lib/adminAuth.js';
+import connectDB from '../../../../../lib/mongodb.js';
 
 export async function GET(request) {
   try {

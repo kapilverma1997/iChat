@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from "./FilePreview.module.css";
 
 export default function FilePreview({
@@ -12,6 +12,25 @@ export default function FilePreview({
 }) {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showImageModal, setShowImageModal] = useState(false);
+
+  useEffect(() => {
+    if (showImageModal) {
+      document.body.style.overflow = "hidden";
+      const handleEscape = (e) => {
+        if (e.key === "Escape") {
+          setShowImageModal(false);
+        }
+      };
+      document.addEventListener("keydown", handleEscape);
+      return () => {
+        document.body.style.overflow = "unset";
+        document.removeEventListener("keydown", handleEscape);
+      };
+    } else {
+      document.body.style.overflow = "unset";
+    }
+  }, [showImageModal]);
 
   const formatFileSize = (bytes) => {
     if (!bytes) return "0 B";
@@ -47,21 +66,55 @@ export default function FilePreview({
 
   if (type === "image" && fileUrl && !error) {
     return (
-      <div className={styles.imagePreview}>
-        {loading && <div className={styles.loading}>Loading...</div>}
-        <img
-          src={fileUrl}
-          alt={fileName || "Preview"}
-          onError={handleImageError}
-          onLoad={handleImageLoad}
-          className={styles.image}
-        />
-        {onRemove && (
-          <button className={styles.removeButton} onClick={onRemove}>
-            ×
-          </button>
+      <>
+        <div className={styles.imagePreview}>
+          {loading && <div className={styles.loading}>Loading...</div>}
+          <img
+            src={fileUrl}
+            alt={fileName || "Preview"}
+            onError={handleImageError}
+            onLoad={handleImageLoad}
+            className={styles.image}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowImageModal(true);
+            }}
+            style={{ cursor: "pointer" }}
+          />
+          {onRemove && (
+            <button className={styles.removeButton} onClick={onRemove}>
+              ×
+            </button>
+          )}
+        </div>
+        {showImageModal && (
+          <div
+            className={styles.imageModalOverlay}
+            onClick={() => setShowImageModal(false)}
+          >
+            <div
+              className={styles.imageModalContent}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                className={styles.imageModalClose}
+                onClick={() => setShowImageModal(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+              <img
+                src={fileUrl}
+                alt={fileName || "Preview"}
+                className={styles.fullSizeImage}
+              />
+              {fileName && (
+                <div className={styles.imageModalFileName}>{fileName}</div>
+              )}
+            </div>
+          </div>
         )}
-      </div>
+      </>
     );
   }
 
@@ -80,8 +133,24 @@ export default function FilePreview({
     );
   }
 
+  const handleFileClick = (e) => {
+    // Don't open file if clicking remove button
+    if (e.target.closest(`.${styles.removeButton}`)) {
+      return;
+    }
+    
+    if (fileUrl) {
+      // Open file in new tab for viewing (PDFs, documents, etc.)
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
-    <div className={styles.filePreview}>
+    <div 
+      className={styles.filePreview}
+      onClick={handleFileClick}
+      style={{ cursor: fileUrl ? 'pointer' : 'default' }}
+    >
       <div className={styles.fileIcon}>{getFileIcon()}</div>
       <div className={styles.fileInfo}>
         <div className={styles.fileName}>{fileName || "File"}</div>
@@ -90,7 +159,13 @@ export default function FilePreview({
         )}
       </div>
       {onRemove && (
-        <button className={styles.removeButton} onClick={onRemove}>
+        <button 
+          className={styles.removeButton} 
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+        >
           ×
         </button>
       )}

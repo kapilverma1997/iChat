@@ -68,9 +68,9 @@ export async function PUT(request) {
     }
 
     const targetUser = await User.findById(userId);
-    if (!targetUser || !targetUser.pushSubscription) {
+    if (!targetUser || !targetUser.pushSubscription || !targetUser.pushSubscription.endpoint) {
       return NextResponse.json(
-        { error: 'User not found or has no push subscription' },
+        { error: 'User not found or has no valid push subscription' },
         { status: 404 }
       );
     }
@@ -90,7 +90,7 @@ export async function PUT(request) {
       });
     } catch (error) {
       // If subscription is invalid, remove it
-      if (error.statusCode === 410 || error.statusCode === 404) {
+      if (error.statusCode === 410 || error.statusCode === 404 || error.message?.includes('endpoint')) {
         targetUser.pushSubscription = undefined;
         await targetUser.save();
       }

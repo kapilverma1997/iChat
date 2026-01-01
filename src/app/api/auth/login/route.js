@@ -49,9 +49,7 @@ export async function POST(request) {
     const refreshToken = generateRefreshToken({ userId: user._id.toString(), email: user.email });
 
     // Save refresh token to database
-    const expiresAt = rememberMe
-      ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
-      : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year for permanent login
 
     await Session.create({
       userId: user._id,
