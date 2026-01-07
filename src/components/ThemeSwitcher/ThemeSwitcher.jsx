@@ -30,25 +30,14 @@ export default function ThemeSwitcher({ currentTheme, onThemeChange }) {
     return () => {
       socket.off("theme:changed", handleThemeChange);
     };
-  }, [socket, connected, onThemeChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket, connected]);
 
   const handleApplyTheme = async (themeId) => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch("/api/settings/theme", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ theme: themeId }),
-      });
-
-      if (response.ok && onThemeChange) {
-        onThemeChange(themeId);
-      }
-    } catch (error) {
-      console.error("Error applying theme:", error);
+    // Just call the parent's onThemeChange - let the parent handle the API call
+    // This prevents duplicate API calls
+    if (onThemeChange) {
+      onThemeChange(themeId);
     }
   };
 

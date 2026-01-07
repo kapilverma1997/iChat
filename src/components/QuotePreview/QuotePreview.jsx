@@ -41,11 +41,20 @@ export default function QuotePreview({ quotedMessage, onClose }) {
       <div className={styles.quoteBar}></div>
       <div className={styles.quoteContent}>
         <div className={styles.quoteHeader}>
-          <Avatar
-            src={quotedMessage.senderId?.profilePhoto}
-            name={quotedMessage.senderId?.name}
-            size="small"
-          />
+          {(() => {
+            // Check privacy settings for profile photo
+            const privacySettings = quotedMessage.senderId?.privacySettings || {};
+            const showProfilePhoto = privacySettings.showProfilePhoto !== false; // Default to true if not set
+            const profilePhotoSrc = showProfilePhoto ? quotedMessage.senderId?.profilePhoto : null;
+            
+            return (
+              <Avatar
+                src={profilePhotoSrc}
+                name={quotedMessage.senderId?.name}
+                size="small"
+              />
+            );
+          })()}
           <span className={styles.quoteAuthor}>
             {quotedMessage.senderId?.name || "Unknown"}
           </span>

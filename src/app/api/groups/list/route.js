@@ -36,17 +36,38 @@ export async function GET(request) {
     }
 
     const groups = await Group.find(query)
-      .populate('members.userId', 'name email profilePhoto presenceStatus')
+      .populate('members.userId', 'name email profilePhoto presenceStatus chatSettings')
       .populate('createdBy', 'name email profilePhoto')
       .populate('lastMessage')
       .sort({ lastMessageAt: -1, createdAt: -1 })
       .limit(100);
 
-    // Add member role for current user
+    // Add member role for current user and filter presenceStatus
     const groupsWithRole = groups.map(group => {
       const member = group.members.find(m => m.userId._id.toString() === user._id.toString());
+      const groupObj = group.toObject();
+      
+      // Filter presenceStatus for members if showOnlineStatus is false
+      if (groupObj.members) {
+        groupObj.members = groupObj.members.map((member) => {
+          if (member.userId && member.userId.chatSettings) {
+            const showOnlineStatus = member.userId.chatSettings.showOnlineStatus !== false;
+            if (!showOnlineStatus) {
+              return {
+                ...member,
+                userId: {
+                  ...member.userId,
+                  presenceStatus: undefined,
+                },
+              };
+            }
+          }
+          return member;
+        });
+      }
+      
       return {
-        ...group.toObject(),
+        ...groupObj,
         userRole: member?.role || null,
         isMember: !!member,
         memberCount: group.members.length,

@@ -4,6 +4,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import GroupMessageItem from "../GroupMessageItem/GroupMessageItem.jsx";
 import GroupMessageInput from "../GroupMessageInput/GroupMessageInput.jsx";
 import PinnedMessageBar from "../PinnedMessageBar/PinnedMessageBar.jsx";
+import EventDetailsModal from "../EventDetailsModal/EventDetailsModal.jsx";
+import MultiSelectBar from "../MultiSelectBar/MultiSelectBar.jsx";
+import ConfirmationDialog from "../ConfirmationDialog/ConfirmationDialog.jsx";
 import { useSocket } from "../../hooks/useSocket.js";
 import styles from "./GroupMessageArea.module.css";
 
@@ -13,6 +16,9 @@ export default function GroupMessageArea({ group, currentUserId, userRole }) {
   const [replyTo, setReplyTo] = useState(null);
   const [typingUsers, setTypingUsers] = useState([]);
   const [showThread, setShowThread] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedMessages, setSelectedMessages] = useState(new Set());
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const { socket, connected } = useSocket();
   const messagesEndRef = useRef(null);
 
@@ -131,8 +137,23 @@ export default function GroupMessageArea({ group, currentUserId, userRole }) {
   const handleEventCreate = useCallback(
     (data) => {
       if (data.groupId === group._id && data.eventMessage) {
-        // Add the new event message to the list
-        setMessages((prev) => [...prev, data.eventMessage]);
+        // Add the new event message to the list with event data attached
+        const eventMessageWithEvent = {
+          ...data.eventMessage,
+          event: data.event, // Attach the event data to the message
+        };
+        setMessages((prev) => {
+          // Check if message already exists to avoid duplicates
+          const messageId =
+            eventMessageWithEvent._id?.toString() || eventMessageWithEvent._id;
+          const exists = prev.some(
+            (msg) => (msg._id?.toString() || msg._id) === messageId
+          );
+          if (exists) {
+            return prev;
+          }
+          return [...prev, eventMessageWithEvent];
+        });
       }
     },
     [group?._id]
@@ -149,9 +170,30 @@ export default function GroupMessageArea({ group, currentUserId, userRole }) {
     );
   }, []);
 
+  const handleEventUpdate = useCallback((messageId, updatedEvent) => {
+    // Update the event in the message immediately for instant feedback
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg._id === messageId && msg.type === "event"
+          ? { ...msg, event: updatedEvent }
+          : msg
+      )
+    );
+    // Also update selected event if it's the same event
+    if (selectedEvent && selectedEvent._id === updatedEvent._id) {
+      setSelectedEvent(updatedEvent);
+    }
+  }, [selectedEvent]);
+
+  const handleEventClick = useCallback((event) => {
+    setSelectedEvent(event);
+  }, []);
+
   useEffect(() => {
     if (group?._id) {
       loadMessages();
+      // Clear selection when group changes
+      setSelectedMessages(new Set());
       if (socket && connected) {
         socket.emit("joinGroup", group._id);
         socket.on("group:message", handleNewMessage);
@@ -213,6 +255,7 @@ export default function GroupMessageArea({ group, currentUserId, userRole }) {
           fileName: fileData?.fileName || "",
           fileSize: fileData?.fileSize || 0,
           metadata: fileData?.metadata || {},
+          mentions: fileData?.mentions || [],
         }),
       });
 
@@ -236,9 +279,20 @@ export default function GroupMessageArea({ group, currentUserId, userRole }) {
           return [...prev, data.groupMessage];
         });
         setReplyTo(null);
+        return { success: true };
+      } else {
+        // Handle error response - return error instead of throwing
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: "Failed to send message" }));
+        const errorMsg =
+          errorData.error || `Failed to send message (${response.status})`;
+        return { success: false, error: errorMsg };
       }
     } catch (error) {
-      console.error("Error sending message:", error);
+      // Only log network/parsing errors, don't throw
+      const errorMsg = error.message || "Failed to send message";
+      return { success: false, error: errorMsg };
     }
   };
 
@@ -248,25 +302,90 @@ export default function GroupMessageArea({ group, currentUserId, userRole }) {
   };
 
   const handleDelete = async (message) => {
-    if (!confirm("Are you sure you want to delete this message?")) return;
+    setDeleteConfirm({
+      type: "message",
+      id: message._id,
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem("accessToken");
+          const response = await fetch("/api/groups/messages/delete", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ messageId: message._id }),
+          });
 
-    try {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch("/api/groups/messages/delete", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ messageId: message._id }),
-      });
+          if (response.ok) {
+            setMessages((prev) => prev.filter((msg) => msg._id !== message._id));
+          }
+        } catch (error) {
+          console.error("Error deleting message:", error);
+        } finally {
+          setDeleteConfirm(null);
+        }
+      },
+    });
+  };
 
-      if (response.ok) {
-        setMessages((prev) => prev.filter((msg) => msg._id !== message._id));
+  const handleSelectMessage = (messageId) => {
+    setSelectedMessages((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(messageId)) {
+        newSet.delete(messageId);
+      } else {
+        newSet.add(messageId);
       }
-    } catch (error) {
-      console.error("Error deleting message:", error);
-    }
+      return newSet;
+    });
+  };
+
+  const handleClearSelection = () => {
+    setSelectedMessages(new Set());
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedMessages.size === 0) return;
+
+    setDeleteConfirm({
+      type: "messages",
+      count: selectedMessages.size,
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem("accessToken");
+          const messageIds = Array.from(selectedMessages);
+
+          // Delete messages one by one
+          const deletePromises = messageIds.map((messageId) =>
+            fetch("/api/groups/messages/delete", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ messageId }),
+            })
+          );
+
+          await Promise.all(deletePromises);
+
+          // Update local state
+          setMessages((prev) =>
+            prev.filter(
+              (msg) => !selectedMessages.has(msg._id?.toString())
+            )
+          );
+
+          setSelectedMessages(new Set());
+          loadMessages(); // Refresh messages
+        } catch (error) {
+          console.error("Error deleting messages:", error);
+        } finally {
+          setDeleteConfirm(null);
+        }
+      },
+    });
   };
 
   const scrollToBottom = () => {
@@ -279,6 +398,13 @@ export default function GroupMessageArea({ group, currentUserId, userRole }) {
     <div className={styles.container}>
       {pinnedMessages.length > 0 && (
         <PinnedMessageBar pinnedMessages={pinnedMessages} onClose={() => {}} />
+      )}
+      {selectedMessages && selectedMessages.size > 0 && (
+        <MultiSelectBar
+          selectedCount={selectedMessages.size}
+          onDelete={handleBulkDelete}
+          onClear={handleClearSelection}
+        />
       )}
       <div className={styles.messages}>
         {loading ? (
@@ -301,6 +427,10 @@ export default function GroupMessageArea({ group, currentUserId, userRole }) {
                 onDelete={handleDelete}
                 onThreadClick={setShowThread}
                 onPollVoteUpdate={handlePollVoteUpdate}
+                onEventUpdate={handleEventUpdate}
+                onEventClick={handleEventClick}
+                isSelected={selectedMessages.has(message._id?.toString())}
+                onSelect={handleSelectMessage}
               />
             ))}
             {typingUsers.length > 0 && (
@@ -321,6 +451,25 @@ export default function GroupMessageArea({ group, currentUserId, userRole }) {
         onCancelReply={() => setReplyTo(null)}
         socket={socket}
       />
+      {deleteConfirm && (
+        <ConfirmationDialog
+          isOpen={true}
+          onClose={() => setDeleteConfirm(null)}
+          onConfirm={deleteConfirm.onConfirm}
+          title={
+            deleteConfirm.type === "messages" ? "Delete Messages" : "Delete Message"
+          }
+          message={
+            deleteConfirm.type === "messages"
+              ? `Are you sure you want to delete ${deleteConfirm.count} ${
+                  deleteConfirm.count === 1 ? "message" : "messages"
+                }? This action cannot be undone.`
+              : "Are you sure you want to delete this message? This action cannot be undone."
+          }
+          confirmText="Delete"
+          variant="danger"
+        />
+      )}
     </div>
   );
 }

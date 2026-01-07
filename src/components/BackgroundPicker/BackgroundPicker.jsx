@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from "./BackgroundPicker.module.css";
 
 const predefinedBackgrounds = [
@@ -13,14 +13,19 @@ const predefinedBackgrounds = [
 ];
 
 export default function BackgroundPicker({ chatId, groupId, currentBackground, onBackgroundChange }) {
-  const [selectedBackground, setSelectedBackground] = useState(currentBackground);
+  const [selectedBackground, setSelectedBackground] = useState(currentBackground || "");
+
+  useEffect(() => {
+    setSelectedBackground(currentBackground || "");
+  }, [currentBackground]);
 
   const handleSelectBackground = async (background) => {
+    const previousBackground = selectedBackground;
     setSelectedBackground(background.url);
     
     try {
       const token = localStorage.getItem("accessToken");
-      await fetch("/api/settings/background", {
+      const response = await fetch("/api/settings/background", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -30,16 +35,23 @@ export default function BackgroundPicker({ chatId, groupId, currentBackground, o
           backgroundUrl: background.url,
           chatId: chatId || null,
           groupId: groupId || null,
-          backgroundType: background.url.startsWith("url(") ? "predefined" : "uploaded",
+          backgroundType: background.url.startsWith("url(") ? "predefined" : background.url.startsWith("data:") ? "uploaded" : "predefined",
           isDefault: !chatId && !groupId,
         }),
       });
 
-      if (onBackgroundChange) {
-        onBackgroundChange(background.url);
+      if (response.ok) {
+        if (onBackgroundChange) {
+          onBackgroundChange(background.url);
+        }
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to update background");
       }
     } catch (error) {
       console.error("Error updating background:", error);
+      // Revert selection on error
+      setSelectedBackground(previousBackground);
     }
   };
 

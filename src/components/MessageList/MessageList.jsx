@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import MessageItem from "../MessageItem/MessageItem.jsx";
 import styles from "./MessageList.module.css";
 
@@ -27,6 +27,31 @@ export default function MessageList({
 }) {
   const messagesEndRef = useRef(null);
   const listRef = useRef(null);
+  const [displaySettings, setDisplaySettings] = useState({
+    messageDensity: "comfortable",
+  });
+
+  useEffect(() => {
+    const fetchDisplaySettings = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const response = await fetch("/api/user/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.user?.displaySettings) {
+            setDisplaySettings({
+              messageDensity: data.user.displaySettings.messageDensity || "comfortable",
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching display settings:", error);
+      }
+    };
+    fetchDisplaySettings();
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -43,8 +68,15 @@ export default function MessageList({
     return index === self.findIndex((m) => m._id?.toString() === messageId);
   });
 
+  const densityMap = {
+    'compact': 'densityCompact',
+    'comfortable': 'densityComfortable',
+    'spacious': 'densitySpacious',
+  };
+  const densityClass = styles[densityMap[displaySettings.messageDensity]] || '';
+
   return (
-    <div ref={listRef} className={styles.list}>
+    <div ref={listRef} className={`${styles.list} ${densityClass}`}>
       {uniqueMessages.map((message) => (
         <MessageItem
           key={message._id}

@@ -134,25 +134,28 @@ export async function POST(request) {
         priority: 'high',
       });
 
-      // Send email alert
-      await sendEmail({
-        to: user.email,
-        subject: 'Suspicious Login Detected - iChat',
-        html: `
-          <h2>Suspicious Login Detected</h2>
-          <p>Hello ${user.name},</p>
-          <p>We detected a login to your iChat account that seems suspicious:</p>
-          <ul>
-            <li><strong>IP Address:</strong> ${ipAddress}</li>
-            <li><strong>Device:</strong> ${deviceName || 'Unknown'}</li>
-            <li><strong>Location:</strong> ${location?.city || 'Unknown'}, ${location?.country || 'Unknown'}</li>
-            <li><strong>Reasons:</strong> ${suspiciousReasons.join(', ')}</li>
-          </ul>
-          <p>If this wasn't you, please secure your account immediately.</p>
-          <p>If this was you, you can ignore this email.</p>
-        `,
-        text: `Suspicious login detected from ${ipAddress}. If this wasn't you, please secure your account.`,
-      });
+      // Send email alert only if email notifications are enabled
+      const emailEnabled = user.notificationSettings?.emailNotifications ?? user.notificationPreferences?.emailEnabled ?? false;
+      if (emailEnabled) {
+        await sendEmail({
+          to: user.email,
+          subject: 'Suspicious Login Detected - iChat',
+          html: `
+            <h2>Suspicious Login Detected</h2>
+            <p>Hello ${user.name},</p>
+            <p>We detected a login to your iChat account that seems suspicious:</p>
+            <ul>
+              <li><strong>IP Address:</strong> ${ipAddress}</li>
+              <li><strong>Device:</strong> ${deviceName || 'Unknown'}</li>
+              <li><strong>Location:</strong> ${location?.city || 'Unknown'}, ${location?.country || 'Unknown'}</li>
+              <li><strong>Reasons:</strong> ${suspiciousReasons.join(', ')}</li>
+            </ul>
+            <p>If this wasn't you, please secure your account immediately.</p>
+            <p>If this was you, you can ignore this email.</p>
+          `,
+          text: `Suspicious login detected from ${ipAddress}. If this wasn't you, please secure your account.`,
+        });
+      }
 
       // Emit socket event
       const io = getIO();

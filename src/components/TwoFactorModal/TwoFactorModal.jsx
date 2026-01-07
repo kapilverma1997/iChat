@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import styles from './TwoFactorModal.module.css';
+import { useState } from "react";
+import styles from "./TwoFactorModal.module.css";
 
 export default function TwoFactorModal({ isOpen, onClose, onSuccess }) {
-  const [step, setStep] = useState('select'); // select, verify, backup
-  const [type, setType] = useState('email'); // email, sms, authenticator
-  const [code, setCode] = useState('');
-  const [phone, setPhone] = useState('');
+  const [step, setStep] = useState("select"); // select, verify, backup
+  const [type, setType] = useState("email"); // email, sms, authenticator
+  const [code, setCode] = useState("");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [backupCodes, setBackupCodes] = useState(null);
@@ -17,28 +17,28 @@ export default function TwoFactorModal({ isOpen, onClose, onSuccess }) {
     setError(null);
 
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/security/verify2FA', {
-        method: 'POST',
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/security/verify2FA", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           type,
-          phone: type === 'sms' ? phone : undefined,
+          phone: type === "sms" ? phone : undefined,
         }),
       });
 
       if (response.ok) {
-        setStep('verify');
+        setStep("verify");
       } else {
         const data = await response.json();
-        setError(data.error || 'Failed to enable 2FA');
+        setError(data.error || "Failed to enable 2FA");
       }
     } catch (error) {
-      setError('Failed to enable 2FA');
-      console.error('Error enabling 2FA:', error);
+      setError("Failed to enable 2FA");
+      console.error("Error enabling 2FA:", error);
     } finally {
       setLoading(false);
     }
@@ -49,11 +49,11 @@ export default function TwoFactorModal({ isOpen, onClose, onSuccess }) {
     setError(null);
 
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/security/verify2FA', {
-        method: 'PUT',
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/security/verify2FA", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
@@ -64,10 +64,10 @@ export default function TwoFactorModal({ isOpen, onClose, onSuccess }) {
 
       if (response.ok) {
         // Generate backup codes
-        const codesResponse = await fetch('/api/security/verify2FA', {
-          method: 'PATCH',
+        const codesResponse = await fetch("/api/security/verify2FA", {
+          method: "PATCH",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         });
@@ -75,27 +75,27 @@ export default function TwoFactorModal({ isOpen, onClose, onSuccess }) {
         if (codesResponse.ok) {
           const codesData = await codesResponse.json();
           setBackupCodes(codesData.backupCodes);
-          setStep('backup');
+          setStep("backup");
         } else {
           onSuccess?.();
           onClose();
         }
       } else {
         const data = await response.json();
-        setError(data.error || 'Invalid verification code');
+        setError(data.error || "Invalid verification code");
       }
     } catch (error) {
-      setError('Failed to verify code');
-      console.error('Error verifying 2FA:', error);
+      setError("Failed to verify code");
+      console.error("Error verifying 2FA:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleClose = () => {
-    setStep('select');
-    setCode('');
-    setPhone('');
+    setStep("select");
+    setCode("");
+    setPhone("");
     setError(null);
     setBackupCodes(null);
     onClose();
@@ -106,12 +106,14 @@ export default function TwoFactorModal({ isOpen, onClose, onSuccess }) {
   return (
     <div className={styles.overlay} onClick={handleClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <button className={styles.closeButton} onClick={handleClose}>×</button>
+        <button className={styles.closeButton} onClick={handleClose}>
+          ×
+        </button>
         <h2 className={styles.title}>Two-Step Verification</h2>
 
         {error && <div className={styles.error}>{error}</div>}
 
-        {step === 'select' && (
+        {step === "select" && (
           <div className={styles.content}>
             <p className={styles.description}>
               Choose a method to verify your identity:
@@ -123,13 +125,13 @@ export default function TwoFactorModal({ isOpen, onClose, onSuccess }) {
                   type="radio"
                   name="type"
                   value="email"
-                  checked={type === 'email'}
+                  checked={type === "email"}
                   onChange={(e) => setType(e.target.value)}
                 />
                 <span>Email</span>
               </label>
 
-              <label className={styles.option}>
+              {/* <label className={styles.option}>
                 <input
                   type="radio"
                   name="type"
@@ -149,10 +151,10 @@ export default function TwoFactorModal({ isOpen, onClose, onSuccess }) {
                   onChange={(e) => setType(e.target.value)}
                 />
                 <span>Authenticator App</span>
-              </label>
+              </label> */}
             </div>
 
-            {type === 'sms' && (
+            {type === "sms" && (
               <input
                 type="tel"
                 placeholder="Phone number"
@@ -165,17 +167,23 @@ export default function TwoFactorModal({ isOpen, onClose, onSuccess }) {
             <button
               className={styles.button}
               onClick={handleEnable}
-              disabled={loading || (type === 'sms' && !phone)}
+              disabled={loading || (type === "sms" && !phone)}
             >
-              {loading ? 'Enabling...' : 'Enable 2FA'}
+              {loading ? "Enabling..." : "Enable 2FA"}
             </button>
           </div>
         )}
 
-        {step === 'verify' && (
+        {step === "verify" && (
           <div className={styles.content}>
             <p className={styles.description}>
-              Enter the verification code sent to your {type === 'email' ? 'email' : type === 'sms' ? 'phone' : 'authenticator app'}:
+              Enter the verification code sent to your{" "}
+              {type === "email"
+                ? "email"
+                : type === "sms"
+                ? "phone"
+                : "authenticator app"}
+              :
             </p>
 
             <input
@@ -192,20 +200,23 @@ export default function TwoFactorModal({ isOpen, onClose, onSuccess }) {
               onClick={handleVerify}
               disabled={loading || !code}
             >
-              {loading ? 'Verifying...' : 'Verify'}
+              {loading ? "Verifying..." : "Verify"}
             </button>
           </div>
         )}
 
-        {step === 'backup' && (
+        {step === "backup" && (
           <div className={styles.content}>
             <p className={styles.description}>
-              Save these backup codes in a safe place. You can use them if you lose access to your 2FA device:
+              Save these backup codes in a safe place. You can use them if you
+              lose access to your 2FA device:
             </p>
 
             <div className={styles.backupCodes}>
               {backupCodes?.map((code, index) => (
-                <div key={index} className={styles.backupCode}>{code}</div>
+                <div key={index} className={styles.backupCode}>
+                  {code}
+                </div>
               ))}
             </div>
 
@@ -224,4 +235,3 @@ export default function TwoFactorModal({ isOpen, onClose, onSuccess }) {
     </div>
   );
 }
-

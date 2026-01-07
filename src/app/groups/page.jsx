@@ -12,9 +12,12 @@ import PollCreator from "../../components/PollCreator/PollCreator.jsx";
 import EventCreator from "../../components/EventCreator/EventCreator.jsx";
 import SharedMediaGallery from "../../components/SharedMediaGallery/SharedMediaGallery.jsx";
 import Button from "../../components/Button/Button.jsx";
+import { useToastNotifications } from "../../hooks/useToastNotifications.js";
 import styles from "./page.module.css";
 
 export default function GroupsPage() {
+  // Enable toast notifications for group chats
+  useToastNotifications();
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
@@ -65,9 +68,55 @@ export default function GroupsPage() {
     loadCurrentUser();
   }, []);
 
+  // Check for active group from sessionStorage (e.g., from toast notification click)
+  useEffect(() => {
+    const activeGroupId = sessionStorage.getItem('activeGroupId');
+    if (activeGroupId && !selectedGroup && currentUser) {
+      // Load the group from the API and select it
+      const loadAndSelectGroup = async () => {
+        try {
+          const token = localStorage.getItem("accessToken");
+          const response = await fetch(`/api/groups/${activeGroupId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.group) {
+              // Create a minimal group object for selection
+              const groupToSelect = {
+                _id: data.group._id,
+                name: data.group.name,
+              };
+              setSelectedGroup(groupToSelect);
+              setShowMembers(false);
+              setShowSettings(false);
+              setShowThread(null);
+            }
+          } else {
+            // Clear invalid group ID if group not found
+            sessionStorage.removeItem('activeGroupId');
+          }
+        } catch (error) {
+          console.error("Error loading group from sessionStorage:", error);
+          // Clear invalid group ID
+          sessionStorage.removeItem('activeGroupId');
+        }
+      };
+      
+      loadAndSelectGroup();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser]);
+
   useEffect(() => {
     if (selectedGroup?._id) {
       loadGroupDetails();
+      // Store active group ID in sessionStorage for toast notifications
+      sessionStorage.setItem('activeGroupId', selectedGroup._id.toString());
+    } else {
+      // Clear active group ID when no group is selected
+      sessionStorage.removeItem('activeGroupId');
     }
   }, [selectedGroup?._id]);
 
@@ -76,6 +125,10 @@ export default function GroupsPage() {
     setShowMembers(false);
     setShowSettings(false);
     setShowThread(null);
+    // Store active group ID in sessionStorage for toast notifications
+    if (group?._id) {
+      sessionStorage.setItem('activeGroupId', group._id.toString());
+    }
   };
 
   const handleRefreshGroup = () => {

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import styles from './SecuritySettings.module.css';
+import { useState, useEffect } from "react";
+import styles from "./SecuritySettings.module.css";
 
 export default function SecuritySettings({ userId }) {
   const [settings, setSettings] = useState({
@@ -19,8 +19,8 @@ export default function SecuritySettings({ userId }) {
 
   const fetchSettings = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/user/me', {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/user/me", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -30,18 +30,18 @@ export default function SecuritySettings({ userId }) {
         setSettings(data.user.chatSecurity);
       }
     } catch (error) {
-      console.error('Error fetching settings:', error);
+      console.error("Error fetching settings:", error);
     }
   };
 
   const updateSetting = async (key, value) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/user/update', {
-        method: 'PATCH',
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/user/update", {
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
@@ -56,7 +56,7 @@ export default function SecuritySettings({ userId }) {
         setSettings((prev) => ({ ...prev, [key]: value }));
       }
     } catch (error) {
-      console.error('Error updating setting:', error);
+      console.error("Error updating setting:", error);
     } finally {
       setLoading(false);
     }
@@ -80,7 +80,9 @@ export default function SecuritySettings({ userId }) {
             <input
               type="checkbox"
               checked={settings.screenshotBlocking}
-              onChange={(e) => updateSetting('screenshotBlocking', e.target.checked)}
+              onChange={(e) =>
+                updateSetting("screenshotBlocking", e.target.checked)
+              }
               disabled={loading}
             />
             <span className={styles.slider}></span>
@@ -98,14 +100,16 @@ export default function SecuritySettings({ userId }) {
             <input
               type="checkbox"
               checked={settings.watermarkEnabled}
-              onChange={(e) => updateSetting('watermarkEnabled', e.target.checked)}
+              onChange={(e) =>
+                updateSetting("watermarkEnabled", e.target.checked)
+              }
               disabled={loading}
             />
             <span className={styles.slider}></span>
           </label>
         </div>
 
-        <div className={styles.setting}>
+        {/* <div className={styles.setting}>
           <div className={styles.settingInfo}>
             <label className={styles.label}>Disable Copy</label>
             <p className={styles.description}>
@@ -116,32 +120,32 @@ export default function SecuritySettings({ userId }) {
             <input
               type="checkbox"
               checked={settings.disableCopy}
-              onChange={(e) => updateSetting('disableCopy', e.target.checked)}
+              onChange={(e) => updateSetting("disableCopy", e.target.checked)}
               disabled={loading}
             />
             <span className={styles.slider}></span>
           </label>
-        </div>
+        </div> */}
 
-        <div className={styles.setting}>
+        {/* <div className={styles.setting}>
           <div className={styles.settingInfo}>
             <label className={styles.label}>Disable Forward</label>
-            <p className={styles.description}>
-              Prevent forwarding messages
-            </p>
+            <p className={styles.description}>Prevent forwarding messages</p>
           </div>
           <label className={styles.switch}>
             <input
               type="checkbox"
               checked={settings.disableForward}
-              onChange={(e) => updateSetting('disableForward', e.target.checked)}
+              onChange={(e) =>
+                updateSetting("disableForward", e.target.checked)
+              }
               disabled={loading}
             />
             <span className={styles.slider}></span>
           </label>
-        </div>
+        </div> */}
 
-        <div className={styles.setting}>
+        {/* <div className={styles.setting}>
           <div className={styles.settingInfo}>
             <label className={styles.label}>Disable Download</label>
             <p className={styles.description}>
@@ -152,14 +156,15 @@ export default function SecuritySettings({ userId }) {
             <input
               type="checkbox"
               checked={settings.disableDownload}
-              onChange={(e) => updateSetting('disableDownload', e.target.checked)}
+              onChange={(e) =>
+                updateSetting("disableDownload", e.target.checked)
+              }
               disabled={loading}
             />
             <span className={styles.slider}></span>
           </label>
-        </div>
+        </div> */}
       </div>
     </div>
   );
 }
-

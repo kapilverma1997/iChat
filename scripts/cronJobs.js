@@ -21,6 +21,7 @@ import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import AdminSettings from '../models/AdminSettings.js';
 import ArchivedChat from '../models/ArchivedChat.js';
+import MessageBackup from '../models/MessageBackup.js';
 import { getIO } from '../lib/socket.js';
 import { unlink } from 'fs/promises';
 import { existsSync } from 'fs';
@@ -364,9 +365,14 @@ export async function processEmailDigests() {
   try {
     await connectDB();
 
-    const users = await User.find({
-      'notificationPreferences.emailEnabled': true,
+    // Find users with email notifications enabled (check notificationSettings.emailNotifications first)
+    const allUsers = await User.find({
       'notificationPreferences.emailDigestInterval': { $exists: true },
+    });
+
+    // Filter users who have email notifications enabled
+    const users = allUsers.filter(user => {
+      return user.notificationSettings?.emailNotifications ?? user.notificationPreferences?.emailEnabled ?? false;
     });
 
     for (const user of users) {
@@ -408,7 +414,7 @@ export async function processEmailDigests() {
             emailBody += `<li><strong>${type}:</strong> ${grouped[type].length} notifications</li>`;
           });
 
-          emailBody += `</ul><p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard">View in iChat</a></p>`;
+          emailBody += `</ul><p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/chats">View in iChat</a></p>`;
 
           await sendEmail({
             to: user.email,
@@ -436,7 +442,7 @@ export async function processEmailDigests() {
   }
 }
 
-// Auto-archive inactive chats
+// Auto-archive inactive chats (admin settings - keep for backward compatibility)
 export async function processAutoArchive() {
   try {
     await connectDB();
@@ -487,6 +493,235 @@ export async function processAutoArchive() {
   }
 }
 
+// Process user-specific auto-delete messages
+export async function processUserAutoDelete() {
+  try {
+    await connectDB();
+
+    // Find users with auto-delete enabled
+    const users = await User.find({
+      'messageHistorySettings.autoDeleteEnabled': true,
+      'messageHistorySettings.autoDeleteDays': { $exists: true, $gt: 0 },
+    });
+
+    for (const user of users) {
+      try {
+        const autoDeleteDays = user.messageHistorySettings?.autoDeleteDays || 30;
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - autoDeleteDays);
+
+        // Find all chats where user is a participant
+        const userChats = await Chat.find({
+          participants: user._id,
+        }).select('_id');
+
+        const chatIds = userChats.map((chat) => chat._id);
+
+        if (chatIds.length === 0) continue;
+
+        // Delete old messages from user's chats
+        const result = await Message.updateMany(
+          {
+            chatId: { $in: chatIds },
+            createdAt: { $lt: cutoffDate },
+            isDeleted: false,
+            senderId: user._id, // Only delete messages sent by this user
+          },
+          {
+            $set: {
+              isDeleted: true,
+              deletedAt: new Date(),
+            },
+          }
+        );
+
+        if (result.modifiedCount > 0) {
+          // Emit socket events for affected chats
+          const io = getIO();
+          if (io) {
+            const affectedChats = await Message.distinct('chatId', {
+              chatId: { $in: chatIds },
+              createdAt: { $lt: cutoffDate },
+              senderId: user._id,
+            });
+
+            affectedChats.forEach((chatId) => {
+              io.to(`chat:${chatId}`).emit('message:deletedByAutoDelete', {
+                chatId: chatId.toString(),
+                userId: user._id.toString(),
+                count: result.modifiedCount,
+              });
+            });
+          }
+
+          console.log(`Auto-deleted ${result.modifiedCount} messages for user ${user._id}`);
+        }
+      } catch (error) {
+        console.error(`Error processing auto-delete for user ${user._id}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error('Error processing user auto-delete:', error);
+  }
+}
+
+// Process user-specific auto-archive chats
+export async function processUserAutoArchive() {
+  try {
+    await connectDB();
+
+    // Find users with auto-archive enabled
+    const users = await User.find({
+      'messageHistorySettings.archiveOldChats': true,
+      'messageHistorySettings.archiveAfterDays': { $exists: true, $gt: 0 },
+    });
+
+    for (const user of users) {
+      try {
+        const archiveAfterDays = user.messageHistorySettings?.archiveAfterDays || 90;
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - archiveAfterDays);
+
+        // Find inactive chats for this user (no messages in last X days)
+        const inactiveChats = await Chat.find({
+          participants: user._id,
+          lastMessageAt: { $lt: cutoffDate },
+          isArchived: false,
+        })
+          .populate('participants')
+          .lean();
+
+        for (const chat of inactiveChats) {
+          try {
+            // Check if already archived
+            const existingArchive = await ArchivedChat.findOne({ chatId: chat._id });
+            if (existingArchive) continue;
+
+            // Create archive record
+            await ArchivedChat.create({
+              chatId: chat._id,
+              archivedAt: new Date(),
+              archivedBy: user._id,
+              reason: 'Auto-archived by user settings',
+              lastActivityAt: chat.lastMessageAt || chat.createdAt,
+              canRestore: true,
+            });
+
+            // Mark chat as archived
+            await Chat.findByIdAndUpdate(chat._id, {
+              isArchived: true,
+            });
+
+            // Emit socket event
+            const io = getIO();
+            if (io) {
+              io.to(`user:${user._id}`).emit('chat:archived', {
+                chatId: chat._id.toString(),
+                reason: 'Auto-archived due to inactivity',
+              });
+            }
+
+            console.log(`Auto-archived chat ${chat._id} for user ${user._id}`);
+          } catch (error) {
+            console.error(`Error archiving chat ${chat._id} for user ${user._id}:`, error);
+          }
+        }
+      } catch (error) {
+        console.error(`Error processing auto-archive for user ${user._id}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error('Error processing user auto-archive:', error);
+  }
+}
+
+// Process message backups for users with backup enabled
+export async function processMessageBackups() {
+  try {
+    await connectDB();
+
+    // Find users with backup enabled
+    const users = await User.find({
+      'messageHistorySettings.backupEnabled': true,
+    });
+
+    for (const user of users) {
+      try {
+        // Check if backup was done recently (within last 24 hours)
+        const lastBackup = await MessageBackup.findOne({
+          userId: user._id,
+          status: 'completed',
+          backupDate: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+        }).sort({ backupDate: -1 });
+
+        // Skip if backup was done in last 24 hours
+        if (lastBackup) {
+          continue;
+        }
+
+        // Find all chats where user is a participant
+        const userChats = await Chat.find({
+          participants: user._id,
+        }).select('_id');
+
+        if (userChats.length === 0) continue;
+
+        let totalMessagesBackedUp = 0;
+        const backupDate = new Date();
+
+        // Process each chat separately to avoid memory issues
+        for (const chat of userChats) {
+          try {
+            // Get all non-deleted messages from this chat
+            const messages = await Message.find({
+              chatId: chat._id,
+              isDeleted: false,
+            })
+              .sort({ createdAt: -1 })
+              .lean();
+
+            if (messages.length === 0) continue;
+
+            // Prepare messages for backup
+            const chatMessages = messages.map((message) => ({
+              messageId: message._id,
+              messageData: message,
+              backedUpAt: backupDate,
+            }));
+
+            // Calculate backup size (approximate)
+            const backupSize = JSON.stringify(chatMessages).length;
+
+            // Create backup record for this chat
+            await MessageBackup.create({
+              userId: user._id,
+              chatId: chat._id,
+              messages: chatMessages,
+              backupType: 'scheduled',
+              backupDate: backupDate,
+              size: backupSize,
+              messageCount: chatMessages.length,
+              status: 'completed',
+            });
+
+            totalMessagesBackedUp += chatMessages.length;
+          } catch (error) {
+            console.error(`Error creating backup for chat ${chat._id} for user ${user._id}:`, error);
+          }
+        }
+
+        if (totalMessagesBackedUp > 0) {
+          console.log(`Created backup for user ${user._id} with ${totalMessagesBackedUp} messages across ${userChats.length} chats`);
+        }
+      } catch (error) {
+        console.error(`Error processing backup for user ${user._id}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error('Error processing message backups:', error);
+  }
+}
+
 // Run all cron jobs
 export async function runCronJobs() {
   await processScheduledMessages();
@@ -496,6 +731,9 @@ export async function runCronJobs() {
   await processMessageRetention();
   await processEmailDigests();
   await processAutoArchive();
+  await processUserAutoDelete();
+  await processUserAutoArchive();
+  await processMessageBackups();
 }
 
 // Schedule cron jobs to run every minute

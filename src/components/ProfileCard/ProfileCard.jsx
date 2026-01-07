@@ -38,6 +38,10 @@ export default function ProfileCard({
     showDesignation: true,
   };
 
+  // Check chat settings for online status visibility
+  const chatSettings = user.chatSettings || {};
+  const showOnlineStatus = chatSettings.showOnlineStatus !== false; // Default to true if not set
+
   const lastSeenDate =
     typeof user.lastSeen === "string" ? new Date(user.lastSeen) : user.lastSeen;
   const lastSeenText = formatLastSeen(lastSeenDate);
@@ -56,9 +60,11 @@ export default function ProfileCard({
             {user.name.charAt(0).toUpperCase()}
           </div>
         )}
-        <div className={styles.statusContainer}>
-          <StatusBadge status={user.presenceStatus} size="large" />
-        </div>
+        {showOnlineStatus && (
+          <div className={styles.statusContainer}>
+            <StatusBadge status={user.presenceStatus} size="large" />
+          </div>
+        )}
       </div>
 
       <div className={styles.infoSection}>
@@ -71,7 +77,7 @@ export default function ProfileCard({
         )}
         {privacySettings.showLastSeen && (
           <p className={styles.lastSeen}>
-            {user.presenceStatus === "online"
+            {showOnlineStatus && user.presenceStatus === "online"
               ? "Online"
               : `Last seen ${lastSeenText}`}
           </p>

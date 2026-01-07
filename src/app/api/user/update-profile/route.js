@@ -27,7 +27,7 @@ export async function PATCH(request) {
     }
 
     const body = await request.json();
-    const { name, phone, designation, profilePhoto } = body;
+    const { name, phone, designation, profilePhoto, chatSecurity, twoFactorEnabled, twoFactorType } = body;
 
     const user = await User.findById(payload.userId);
 
@@ -51,6 +51,36 @@ export async function PATCH(request) {
     }
     if (designation !== undefined) user.designation = designation;
     if (profilePhoto !== undefined) user.profilePhoto = profilePhoto;
+    
+    // Update chat security settings
+    if (chatSecurity !== undefined && typeof chatSecurity === 'object') {
+      if (!user.chatSecurity) {
+        user.chatSecurity = {};
+      }
+      if (chatSecurity.screenshotBlocking !== undefined) {
+        user.chatSecurity.screenshotBlocking = chatSecurity.screenshotBlocking;
+      }
+      if (chatSecurity.watermarkEnabled !== undefined) {
+        user.chatSecurity.watermarkEnabled = chatSecurity.watermarkEnabled;
+      }
+      if (chatSecurity.disableCopy !== undefined) {
+        user.chatSecurity.disableCopy = chatSecurity.disableCopy;
+      }
+      if (chatSecurity.disableForward !== undefined) {
+        user.chatSecurity.disableForward = chatSecurity.disableForward;
+      }
+      if (chatSecurity.disableDownload !== undefined) {
+        user.chatSecurity.disableDownload = chatSecurity.disableDownload;
+      }
+    }
+    
+    // Update 2FA settings
+    if (twoFactorEnabled !== undefined) {
+      user.twoFactorEnabled = twoFactorEnabled;
+    }
+    if (twoFactorType !== undefined) {
+      user.twoFactorType = twoFactorType || null;
+    }
 
     await user.save();
 

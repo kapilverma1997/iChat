@@ -74,7 +74,13 @@ export async function POST(request) {
     await group.save();
 
     await threadMessage.populate('senderId', 'name email profilePhoto');
-    await threadMessage.populate('replyTo');
+    await threadMessage.populate({
+      path: 'replyTo',
+      populate: {
+        path: 'senderId',
+        select: 'name email profilePhoto'
+      }
+    });
     await threadMessage.populate('threadId');
 
     // Emit socket event

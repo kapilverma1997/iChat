@@ -40,8 +40,54 @@ export default function MessageItem({
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
+  const [watermarkEnabled, setWatermarkEnabled] = useState(false);
+  const [chatSettings, setChatSettings] = useState({
+    readReceipts: true,
+    linkPreviews: true,
+    showMessageTimestamps: true,
+    showAvatars: true,
+    compactMode: false,
+    showReactions: true,
+  });
+  const [displaySettings, setDisplaySettings] = useState({
+    fontSize: "medium",
+    messageDensity: "comfortable",
+  });
   const menuRef = useRef(null);
   const actionsRef = useRef(null);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const response = await fetch("/api/user/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setWatermarkEnabled(data.user?.chatSecurity?.watermarkEnabled ?? false);
+          if (data.user?.chatSettings) {
+            setChatSettings({
+              readReceipts: data.user.chatSettings.readReceipts ?? true,
+              linkPreviews: data.user.chatSettings.linkPreviews ?? true,
+              showMessageTimestamps: data.user.chatSettings.showMessageTimestamps ?? true,
+              showAvatars: data.user.chatSettings.showAvatars ?? true,
+              compactMode: data.user.chatSettings.compactMode ?? false,
+            });
+          }
+          if (data.user?.displaySettings) {
+            setDisplaySettings({
+              fontSize: data.user.displaySettings.fontSize || "medium",
+              messageDensity: data.user.displaySettings.messageDensity || "comfortable",
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching settings:", error);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const formatTime = (date) => {
     return new Date(date).toLocaleTimeString("en-US", {
@@ -229,6 +275,8 @@ export default function MessageItem({
   };
 
   const getReadStatus = () => {
+    // Don't show read receipts if disabled in settings
+    if (!chatSettings.readReceipts) return null;
     if (!isOwn) return null;
     const readCount = message.readBy?.length || 0;
     const participantsCount = 2; // For 1:1 chat
@@ -244,11 +292,25 @@ export default function MessageItem({
 
     switch (type) {
       case "emoji":
-      case "gif":
       case "sticker":
         return (
           <div className={styles.emojiContent}>
             <span className={styles.largeEmoji}>{content}</span>
+          </div>
+        );
+
+      case "gif":
+        // GIF content is a URL, display it as an image
+        return (
+          <div className={styles.gifContent}>
+            {content && (
+              <img
+                src={content}
+                alt="GIF"
+                className={styles.gifImage}
+                loading="lazy"
+              />
+            )}
           </div>
         );
 
@@ -261,6 +323,7 @@ export default function MessageItem({
                 fileName={fileName}
                 fileSize={fileSize}
                 type="image"
+                isOwn={isOwn}
               />
             )}
             {content && content.trim() && (
@@ -278,6 +341,7 @@ export default function MessageItem({
                 fileName={fileName}
                 fileSize={fileSize}
                 type="video"
+                isOwn={isOwn}
               />
             )}
             {content && content.trim() && (
@@ -317,6 +381,7 @@ export default function MessageItem({
               fileName={fileName}
               fileSize={fileSize}
               type="file"
+              isOwn={isOwn}
             />
             {content && content.trim() && (
               <div className={styles.text}>{content}</div>
@@ -381,7 +446,7 @@ export default function MessageItem({
 
       case "markdown":
         const urls = extractUrls(content);
-        const hasUrls = urls.length > 0;
+        const hasUrls = urls.length > 0 && chatSettings.linkPreviews;
         const textWithoutUrls = hasUrls
           ? content.replace(/https?:\/\/[^\s]+/g, "").trim()
           : content;
@@ -396,16 +461,31 @@ export default function MessageItem({
                 }}
               />
             )}
-            {urls.map((url, index) => (
+            {chatSettings.linkPreviews && urls.map((url, index) => (
               <LinkPreview key={index} url={url} />
             ))}
+            {!chatSettings.linkPreviews && urls.length > 0 && (
+              <div className={styles.text}>
+                {urls.map((url, index) => (
+                  <a
+                    key={index}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.link}
+                  >
+                    {url}
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
         );
 
       case "text":
       default:
         const textUrls = extractUrls(content);
-        const hasTextUrls = textUrls.length > 0;
+        const hasTextUrls = textUrls.length > 0 && chatSettings.linkPreviews;
         const textContent = hasTextUrls
           ? content.replace(/https?:\/\/[^\s]+/g, "").trim()
           : content;
@@ -420,9 +500,24 @@ export default function MessageItem({
                 }}
               />
             )}
-            {textUrls.map((url, index) => (
+            {chatSettings.linkPreviews && textUrls.map((url, index) => (
               <LinkPreview key={index} url={url} />
             ))}
+            {!chatSettings.linkPreviews && textUrls.length > 0 && (
+              <div className={styles.text}>
+                {textUrls.map((url, index) => (
+                  <a
+                    key={index}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.link}
+                  >
+                    {url}
+                  </a>
+                ))}
+              </div>
+            )}
           </>
         );
     }
@@ -436,20 +531,43 @@ export default function MessageItem({
   const isDeletedForEveryone = message.isDeletedForEveryone || false;
   const showDeletedMessage = isDeletedForMe || isDeletedForEveryone;
 
+  // Build class names based on display settings
+  const fontSizeMap = {
+    'small': 'fontSizeSmall',
+    'medium': 'fontSizeMedium',
+    'large': 'fontSizeLarge',
+    'extra-large': 'fontSizeExtralarge',
+  };
+  const densityMap = {
+    'compact': 'densityCompact',
+    'comfortable': 'densityComfortable',
+    'spacious': 'densitySpacious',
+  };
+  const fontSizeClass = styles[fontSizeMap[displaySettings.fontSize]] || '';
+  const densityClass = styles[densityMap[displaySettings.messageDensity]] || '';
+  const compactClass = chatSettings.compactMode ? styles.compact : '';
+
   return (
     <div
       className={`${styles.message} ${isOwn ? styles.own : ""} ${
         isSelected ? styles.selected : ""
-      } ${showDeletedMessage ? styles.deleted : ""}`}
+      } ${showDeletedMessage ? styles.deleted : ""} ${fontSizeClass} ${densityClass} ${compactClass}`}
       onClick={handleMessageClick}
     >
-      {!isOwn && (
-        <Avatar
-          src={message.senderId?.profilePhoto}
-          name={message.senderId?.name}
-          size="small"
-        />
-      )}
+      {!isOwn && chatSettings.showAvatars && (() => {
+        // Check privacy settings for profile photo
+        const privacySettings = message.senderId?.privacySettings || {};
+        const showProfilePhoto = privacySettings.showProfilePhoto !== false; // Default to true if not set
+        const profilePhotoSrc = showProfilePhoto ? message.senderId?.profilePhoto : null;
+        
+        return (
+          <Avatar
+            src={profilePhotoSrc}
+            name={message.senderId?.name}
+            size="small"
+          />
+        );
+      })()}
       <div className={styles.content}>
         {message.forwardedFrom && (
           <div className={styles.forwardedLabel}>
@@ -505,23 +623,32 @@ export default function MessageItem({
                 onReactionClick={(emoji) => onReact(message, emoji)}
               />
             </div>
-            <div className={styles.meta}>
-              <span className={styles.time}>
-                {formatTime(message.createdAt)}
-              </span>
-              {message.edited && (
-                <span className={styles.editedLabel}>(edited)</span>
-              )}
-              {isOwn && (() => {
-                const readStatus = getReadStatus();
-                if (!readStatus) return null;
-                return (
-                  <span className={`${styles.readStatus} ${readStatus.isRead ? styles.read : styles.sent}`}>
-                    {readStatus.text}
-                  </span>
-                );
-              })()}
-            </div>
+            {chatSettings.showMessageTimestamps && (
+              <div className={styles.meta}>
+                <span className={styles.time}>
+                  {formatTime(message.createdAt)}
+                </span>
+                {message.edited && (
+                  <span className={styles.editedLabel}>(edited)</span>
+                )}
+                {isOwn && (() => {
+                  const readStatus = getReadStatus();
+                  if (!readStatus) return null;
+                  return (
+                    <span className={`${styles.readStatus} ${readStatus.isRead ? styles.read : styles.sent}`}>
+                      {readStatus.text}
+                    </span>
+                  );
+                })()}
+              </div>
+            )}
+            {message.metadata?.watermark && watermarkEnabled && (
+              <div className={styles.watermark}>
+                <span className={styles.watermarkText}>
+                  {message.metadata.watermark.email} • {message.metadata.watermark.userId} • {new Date(message.metadata.watermark.timestamp).toLocaleString()}
+                </span>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -600,3 +727,5 @@ export default function MessageItem({
     </div>
   );
 }
+
+

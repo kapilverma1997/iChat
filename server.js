@@ -2,6 +2,7 @@ import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
 import { initSocket } from './lib/socket.js';
+import { initRabbitMQ } from './lib/rabbitmq.js';
 import './scripts/cronJobs.js'; // Start cron jobs
 
 const dev = process.env.NODE_ENV !== 'production';
@@ -13,7 +14,17 @@ const port = parseInt(process.env.PORT || '3000', 10);
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
-app.prepare().then(() => {
+app.prepare().then(async () => {
+  // Initialize RabbitMQ (exchanges and queues)
+  // Note: Consumers run as a separate service (services/rabbitmq-consumer.js)
+  try {
+    await initRabbitMQ();
+    console.log('✅ RabbitMQ initialized');
+  } catch (error) {
+    console.error('⚠️  RabbitMQ initialization failed:', error.message);
+    console.log('⚠️  Message publishing will fallback to direct Socket.IO');
+  }
+
   const httpServer = createServer(async (req, res) => {
     try {
       const parsedUrl = parse(req.url, true);
@@ -36,5 +47,6 @@ app.prepare().then(() => {
     } else {
       console.log(`> Ready on http://${hostname}:${port}`);
     }
+    console.log('📝 Note: Start RabbitMQ consumer service separately: node services/rabbitmq-consumer.js');
   });
 });

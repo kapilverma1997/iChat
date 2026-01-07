@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "node server.js",
     "build": "next build",
-    "start": "NODE_ENV=production node server.js",
+    "start": "cross-env NODE_ENV=production node server.js",
+    "consumer": "node services/rabbitmq-consumer.js",
+    "consumer:dev": "cross-env NODE_ENV=development node services/rabbitmq-consumer.js",
     "lint": "eslint",
     "seed": "node scripts/seed.js",
     "seed:groups": "node scripts/seedGroups.js",
@@ -18,6 +20,7 @@
     "backfill:logs": "node scripts/backfillMessageLogs.js"
   },
   "dependencies": {
+    "amqplib": "^0.10.3",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.3",
     "jsonwebtoken": "^9.0.3",
@@ -38,6 +41,7 @@
   },
   "devDependencies": {
     "babel-plugin-react-compiler": "1.0.0",
+    "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.7"
   }

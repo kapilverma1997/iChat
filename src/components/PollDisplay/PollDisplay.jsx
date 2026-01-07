@@ -31,24 +31,93 @@ export default function PollDisplay({ poll, currentUserId, onVoteUpdate }) {
 
   const isClosed =
     poll.isClosed || (poll.expiresAt && new Date() > new Date(poll.expiresAt));
-  const totalVotes =
-    poll.totalVotes ||
-    poll.options.reduce((sum, opt) => sum + (opt.votes?.length || 0), 0);
-  const hasUserVoted = selectedOptions.length > 0;
+  
+  // Calculate totalVotes - ensure it's accurate
+  let totalVotes = poll.totalVotes;
+  if (poll.allowMultipleChoices) {
+    // For multiple choice, count all votes across all options
+    const calculatedTotal = poll.options.reduce((sum, opt) => sum + (opt.votes?.length || 0), 0);
+    totalVotes = totalVotes || calculatedTotal;
+  } else {
+    // For single choice, count unique voters
+    const uniqueVoters = new Set();
+    poll.options.forEach(opt => {
+      if (opt.votes) {
+        opt.votes.forEach(vote => {
+          const voteUserId = vote.userId?._id?.toString() || vote.userId?.toString();
+          if (voteUserId) {
+            uniqueVoters.add(voteUserId);
+          }
+        });
+      }
+    });
+    totalVotes = totalVotes || uniqueVoters.size;
+  }
+  
+  // Check if user has voted by checking poll data
+  const hasUserVoted = poll.options.some(opt => 
+    opt.votes?.some(vote => 
+      vote.userId?._id?.toString() === currentUserId?.toString() ||
+      vote.userId?.toString() === currentUserId?.toString()
+    )
+  );
 
-  const handleOptionClick = (optionIndex) => {
+  const handleOptionClick = async (optionIndex) => {
     if (isClosed || isVoting) return;
 
+    let newSelectedOptions;
     if (poll.allowMultipleChoices) {
       // Toggle selection for multiple choice
-      setSelectedOptions((prev) =>
-        prev.includes(optionIndex)
-          ? prev.filter((idx) => idx !== optionIndex)
-          : [...prev, optionIndex]
-      );
+      newSelectedOptions = selectedOptions.includes(optionIndex)
+        ? selectedOptions.filter((idx) => idx !== optionIndex)
+        : [...selectedOptions, optionIndex];
     } else {
       // Single choice - replace selection
-      setSelectedOptions([optionIndex]);
+      newSelectedOptions = [optionIndex];
+    }
+
+    // Store previous state for error recovery
+    const previousSelectedOptions = selectedOptions;
+
+    // Update local state immediately for instant feedback
+    setSelectedOptions(newSelectedOptions);
+
+    // Save vote immediately to persist selection
+    setIsVoting(true);
+    setError("");
+
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/groups/polls/vote", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          pollId: poll._id,
+          optionIndexes: newSelectedOptions,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        // Revert selection on error
+        setSelectedOptions(previousSelectedOptions);
+        throw new Error(data.error || "Failed to vote");
+      }
+
+      // Update poll data immediately
+      if (data.poll) {
+        // Update local state to reflect the vote immediately
+        if (onVoteUpdate) {
+          onVoteUpdate(data.poll);
+        }
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsVoting(false);
     }
   };
 

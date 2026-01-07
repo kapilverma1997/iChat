@@ -4,8 +4,10 @@ import { getAuthenticatedUser } from '../../../../../lib/auth.js';
 import Chat from '../../../../../models/Chat.js';
 import Message from '../../../../../models/Message.js';
 import MessageLog from '../../../../../models/MessageLog.js';
+import User from '../../../../../models/User.js';
 import { getIO } from '../../../../../lib/socket.js';
 import { notifyNewMessage } from '../../../../../lib/notifications.js';
+import { publishMessage } from '../../../../../lib/messageProducer.js';
 
 export async function POST(request) {
   try {
@@ -55,7 +57,25 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
     }
 
-    // Create message
+    // Fetch full user data to check watermark settings
+    const fullUser = await User.findById(user._id).select('email chatSecurity');
+    const watermarkEnabled = fullUser?.chatSecurity?.watermarkEnabled || false;
+
+    // Prepare metadata with watermark if enabled
+    let messageMetadata = metadata || {};
+    if (watermarkEnabled) {
+      const timestamp = new Date().toISOString();
+      messageMetadata = {
+        ...messageMetadata,
+        watermark: {
+          email: fullUser.email,
+          userId: user._id.toString(),
+          timestamp: timestamp,
+        },
+      };
+    }
+
+    // Create message in MongoDB first (for immediate response)
     const message = await Message.create({
       chatId,
       senderId: user._id,
@@ -68,7 +88,7 @@ export async function POST(request) {
       quotedMessage: quotedMessage || null,
       priority,
       tags,
-      metadata: metadata || {},
+      metadata: messageMetadata,
       deliveredAt: new Date(),
     });
 
@@ -118,51 +138,36 @@ export async function POST(request) {
       });
     }
 
-    // Emit socket event
+    // Prepare message object for Socket.IO and RabbitMQ
+    const messageObj = message.toObject();
+    // Format sender info for Socket.IO
+    if (messageObj.senderId && typeof messageObj.senderId === 'object') {
+      messageObj.senderId = {
+        _id: messageObj.senderId._id,
+        name: messageObj.senderId.name,
+        email: messageObj.senderId.email,
+        profilePhoto: messageObj.senderId.profilePhoto,
+      };
+    }
+
+    // IMMEDIATELY emit via Socket.IO for real-time delivery to online users
+    // This ensures instant message delivery regardless of RabbitMQ status
     try {
       const io = getIO();
       if (io) {
-        const messageObj = message.toObject();
-        // Ensure senderId is properly formatted
-        if (messageObj.senderId && typeof messageObj.senderId === 'object') {
-          messageObj.senderId = {
-            _id: messageObj.senderId._id,
-            name: messageObj.senderId.name,
-            email: messageObj.senderId.email,
-            profilePhoto: messageObj.senderId.profilePhoto,
-          };
-        }
-        // Ensure quotedMessage senderId is properly formatted
-        if (messageObj.quotedMessage && typeof messageObj.quotedMessage === 'object') {
-          if (messageObj.quotedMessage.senderId && typeof messageObj.quotedMessage.senderId === 'object') {
-            messageObj.quotedMessage.senderId = {
-              _id: messageObj.quotedMessage.senderId._id,
-              name: messageObj.quotedMessage.senderId.name,
-              email: messageObj.quotedMessage.senderId.email,
-              profilePhoto: messageObj.quotedMessage.senderId.profilePhoto,
-            };
-          }
-        }
-        // Emit both old and new event names for compatibility
-        // Emit to chat room (for users who have joined the chat)
+        // Emit to chat room (for all participants in the chat)
         io.to(`chat:${chatId}`).emit('receiveMessage', {
           message: messageObj,
           chatId: chatId.toString(),
         });
-        console.log(`Emitting message:new to chat:${chatId} room`);
         io.to(`chat:${chatId}`).emit('message:new', {
           message: messageObj,
           chatId: chatId.toString(),
         });
 
-        // Also emit to user-specific rooms as a fallback
-        // This ensures delivery even if the recipient hasn't joined the chat room yet
-        const senderName = user.name || user.email || 'Someone';
-        const messageContent = content || (type === 'file' ? fileName : 'Sent a message');
-
+        // Emit to user-specific rooms (for targeted delivery)
         chat.participants.forEach((participantId) => {
           if (participantId.toString() !== user._id.toString()) {
-            console.log("Sending message to user__", participantId.toString());
             io.to(`user:${participantId.toString()}`).emit('message:new', {
               message: messageObj,
               chatId: chatId.toString(),
@@ -171,41 +176,61 @@ export async function POST(request) {
               message: messageObj,
               chatId: chatId.toString(),
             });
-            // Emit notification event for toast notifications
-            io.to(`user:${participantId.toString()}`).emit('notification:new', {
-              notification: {
-                _id: messageObj._id,
-                type: 'message',
-                category: 'direct_messages',
-                title: `New message from ${senderName}`,
-                body: messageContent.length > 100 ? messageContent.substring(0, 100) + '...' : messageContent,
-                chatId: chatId.toString(),
-                messageId: messageObj._id,
-                data: {
-                  senderName,
-                  messageContent,
-                },
-                createdAt: new Date(),
-              },
-            });
           }
         });
-
-        if (quotedMessage) {
-          io.to(`chat:${chatId}`).emit('message:quote', {
-            messageId: message._id.toString(),
-            quotedMessageId: quotedMessage,
-            chatId: chatId.toString(),
-          });
-        }
-        console.log(`Emitted message to chat:${chatId} and user rooms for ${chat.participants.length} participants`);
-      } else {
-        console.warn('Socket.io not available, message saved but not broadcasted');
+        console.log(`✅ Emitted message ${message._id} via Socket.IO for real-time delivery`);
       }
     } catch (socketError) {
-      console.error('Socket error:', socketError);
-      // Don't fail the request if socket fails
+      console.error('Error emitting message via Socket.IO:', socketError);
+      // Continue even if Socket.IO fails - RabbitMQ consumer will handle delivery
     }
+
+    // ALSO publish message to RabbitMQ for async processing
+    // This handles:
+    // 1. Offline message queuing (for users not currently online)
+    // 2. Analytics and logging
+    // 3. Backup delivery mechanism
+    // 4. Distributed system support (multiple server instances)
+    try {
+      await publishMessage({
+        ...messageObj,
+        participants: chat.participants.map((p) => p.toString()),
+      });
+      console.log(`📤 Published message ${message._id} to RabbitMQ for async processing`);
+    } catch (rabbitmqError) {
+      console.error('Error publishing to RabbitMQ:', rabbitmqError);
+      // Don't fail the request - Socket.IO already delivered the message
+      // RabbitMQ is for async processing, not critical for real-time delivery
+    }
+
+    // Send push notifications to all participants (except sender)
+    // This ensures users receive push notifications even when they're offline or not actively viewing the chat
+    const senderName = messageObj.senderId?.name || user.name || 'Someone';
+    const messageContent = content || (type === 'file' ? fileName : type === 'image' ? 'sent an image' : type === 'video' ? 'sent a video' : 'sent a message');
+
+    const notificationPromises = chat.participants
+      .filter((participantId) => participantId.toString() !== user._id.toString())
+      .map(async (participantId) => {
+        try {
+          console.log('notifyNewMessage', participantId.toString(), senderName, messageContent, chatId.toString(), message._id.toString(), false);
+          await notifyNewMessage({
+            userId: participantId.toString(),
+            senderName,
+            messageContent: typeof messageContent === 'string' ? messageContent : String(messageContent),
+            chatId: chatId.toString(),
+            messageId: message._id.toString(),
+            isMention: false,
+          });
+        } catch (notifError) {
+          console.error(`Error sending push notification to user ${participantId}:`, notifError);
+          // Don't fail the request if notification fails
+        }
+      });
+
+    // Wait for all notifications to complete (in parallel, but don't block response)
+    Promise.allSettled(notificationPromises).catch((error) => {
+      console.error('Error in notification promises:', error);
+    });
 
     return NextResponse.json({
       success: true,

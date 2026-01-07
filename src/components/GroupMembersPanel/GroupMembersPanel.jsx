@@ -217,12 +217,25 @@ export default function GroupMembersPanel({ group, currentUserId, userRole, onCl
           <div className={styles.membersList}>
             {members.map((member) => (
               <div key={member.userId._id || member.userId} className={styles.memberItem}>
-                <Avatar
-                  src={member.userId?.profilePhoto}
-                  name={member.userId?.name}
-                  size="medium"
-                  status={member.userId?.presenceStatus}
-                />
+                {(() => {
+                  // Check privacy settings for profile photo
+                  const privacySettings = member.userId?.privacySettings || {};
+                  const showProfilePhoto = privacySettings.showProfilePhoto !== false; // Default to true if not set
+                  const profilePhotoSrc = showProfilePhoto ? member.userId?.profilePhoto : null;
+                  
+                  // Check chat settings for online status visibility
+                  const chatSettings = member.userId?.chatSettings || {};
+                  const showOnlineStatus = chatSettings.showOnlineStatus !== false; // Default to true if not set
+                  
+                  return (
+                    <Avatar
+                      src={profilePhotoSrc}
+                      name={member.userId?.name}
+                      size="medium"
+                      status={showOnlineStatus ? member.userId?.presenceStatus : null}
+                    />
+                  );
+                })()}
                 <div className={styles.memberInfo}>
                   <div className={styles.memberName}>
                     {member.userId?.name || "Unknown"}

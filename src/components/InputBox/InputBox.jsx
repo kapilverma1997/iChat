@@ -12,6 +12,7 @@ export default function InputBox({
   required = false,
   multiline = false,
   disabled = false,
+  readOnly = false,
   rows = 4,
   className = "",
 }) {
@@ -26,6 +27,7 @@ export default function InputBox({
         onKeyPress={onKeyPress}
         required={required}
         disabled={disabled}
+        readOnly={readOnly}
         rows={rows}
         className={`${styles.input} ${styles.textarea} ${className}`}
       />
@@ -43,6 +45,7 @@ export default function InputBox({
       onKeyPress={onKeyPress}
       required={required}
       disabled={disabled}
+      readOnly={readOnly}
       className={`${styles.input} ${className}`}
     />
   );

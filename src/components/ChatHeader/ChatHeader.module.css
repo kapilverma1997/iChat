@@ -17,6 +17,11 @@
   font-size: 16px;
   color: #1f2937;
   margin-bottom: 2px;
+  transition: color 0.2s;
+}
+
+.name:hover {
+  color: #667eea;
 }
 
 .status {
@@ -32,6 +37,10 @@
 
   .name {
     color: #f9fafb;
+  }
+
+  .name:hover {
+    color: #818cf8;
   }
 
   .status {

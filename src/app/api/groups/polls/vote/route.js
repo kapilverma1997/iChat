@@ -49,7 +49,10 @@ export async function POST(request) {
 
     // Check if user already voted
     const hasVoted = poll.options.some(opt => 
-      opt.votes && opt.votes.some(vote => vote.userId && vote.userId.toString() === user._id.toString())
+      opt.votes && opt.votes.some(vote => {
+        const voteUserId = vote.userId?._id?.toString() || vote.userId?.toString();
+        return voteUserId === user._id.toString();
+      })
     );
 
     if (hasVoted && !poll.allowMultipleChoices) {
@@ -65,28 +68,57 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Multiple choices not allowed' }, { status: 400 });
     }
 
-    // Remove existing votes if not allowing multiple
+    // Remove existing votes if not allowing multiple choices
+    // For single choice polls, remove user's vote from all options before adding new vote
     if (!poll.allowMultipleChoices && hasVoted) {
       poll.options.forEach((opt, optIdx) => {
         if (!opt.votes) {
           opt.votes = [];
         }
-        opt.votes = opt.votes.filter(vote => vote.userId && vote.userId.toString() !== user._id.toString());
-        // Mark the nested array as modified
-        poll.markModified(`options.${optIdx}.votes`);
+        const originalLength = opt.votes.length;
+        opt.votes = opt.votes.filter(vote => {
+          const voteUserId = vote.userId?._id?.toString() || vote.userId?.toString();
+          return voteUserId !== user._id.toString();
+        });
+        // Mark as modified if votes were removed
+        if (opt.votes.length !== originalLength) {
+          poll.markModified(`options.${optIdx}.votes`);
+        }
       });
     }
 
-    // Add votes
+    // For multiple choice polls, remove votes from options that are not in the new selection
+    if (poll.allowMultipleChoices && hasVoted) {
+      poll.options.forEach((opt, optIdx) => {
+        if (!opt.votes) {
+          opt.votes = [];
+        }
+        const originalLength = opt.votes.length;
+        // Remove user's vote if this option is not in the new selection
+        if (!optionIndexes.includes(optIdx)) {
+          opt.votes = opt.votes.filter(vote => {
+            const voteUserId = vote.userId?._id?.toString() || vote.userId?.toString();
+            return voteUserId !== user._id.toString();
+          });
+          if (opt.votes.length !== originalLength) {
+            poll.markModified(`options.${optIdx}.votes`);
+          }
+        }
+      });
+    }
+
+    // Add votes to selected options
     optionIndexes.forEach(idx => {
       // Ensure votes array exists
       if (!poll.options[idx].votes) {
         poll.options[idx].votes = [];
       }
       
-      const existingVote = poll.options[idx].votes.find(
-        vote => vote.userId && vote.userId.toString() === user._id.toString()
-      );
+      const existingVote = poll.options[idx].votes.find(vote => {
+        const voteUserId = vote.userId?._id?.toString() || vote.userId?.toString();
+        return voteUserId === user._id.toString();
+      });
+      
       if (!existingVote) {
         poll.options[idx].votes.push({
           userId: user._id,
@@ -97,7 +129,30 @@ export async function POST(request) {
       }
     });
 
-    poll.totalVotes = poll.options.reduce((sum, opt) => sum + (opt.votes?.length || 0), 0);
+    // Recalculate totalVotes - for multiple choice, count all votes; for single choice, count unique voters
+    if (poll.allowMultipleChoices) {
+      // Count all votes across all options
+      poll.totalVotes = poll.options.reduce((sum, opt) => sum + (opt.votes?.length || 0), 0);
+    } else {
+      // Count unique voters (each user can only vote once)
+      const uniqueVoters = new Set();
+      poll.options.forEach(opt => {
+        if (opt.votes) {
+          opt.votes.forEach(vote => {
+            const voteUserId = vote.userId?._id?.toString() || vote.userId?.toString();
+            if (voteUserId) {
+              uniqueVoters.add(voteUserId);
+            }
+          });
+        }
+      });
+      poll.totalVotes = uniqueVoters.size;
+    }
+    
+    // Mark totalVotes as modified
+    poll.markModified('totalVotes');
+    
+    // Save the poll
     await poll.save();
 
     // Reload poll with populated fields

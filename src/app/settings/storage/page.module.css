@@ -1,0 +1,331 @@
+.cloudStorage {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 2rem 0;
+  color: var(--text-primary, #333);
+}
+
+.section {
+  background: var(--bg-secondary, #f8f9fa);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary, #333);
+}
+
+.sectionDescription {
+  font-size: 0.9rem;
+  color: var(--text-secondary, #666);
+  margin: 0 0 1.5rem 0;
+}
+
+/* Storage Overview */
+.storageOverview {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.storageInfo {
+  background: var(--bg-primary, #fff);
+  padding: 1.5rem;
+  border-radius: 6px;
+}
+
+.storageLabel {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #666);
+  margin-bottom: 0.5rem;
+}
+
+.storageValue {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+  margin-bottom: 1rem;
+}
+
+.storageBar {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-secondary, #e9ecef);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.storageBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color, #667eea), #764ba2);
+  transition: width 0.3s ease;
+}
+
+.storagePercentage {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #666);
+}
+
+.storageBreakdown {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.storageItem {
+  background: var(--bg-primary, #fff);
+  padding: 1rem;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.storageItemLabel {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #666);
+}
+
+.storageItemValue {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+}
+
+/* Providers List */
+.providersList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.providerItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background: var(--bg-primary, #fff);
+  border-radius: 6px;
+  transition: box-shadow 0.2s;
+}
+
+.providerItem:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.providerInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.providerIcon {
+  font-size: 2rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary, #f8f9fa);
+  border-radius: 8px;
+}
+
+.providerDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.providerName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+}
+
+.providerDescription {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #666);
+}
+
+.providerUsage {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #666);
+  margin-top: 0.25rem;
+}
+
+.providerActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.connectedBadge {
+  padding: 0.375rem 0.75rem;
+  background: #d4edda;
+  color: #155724;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Settings */
+.setting {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--bg-primary, #fff);
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.settingInfo {
+  flex: 1;
+  margin-right: 1rem;
+}
+
+.label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  color: var(--text-primary, #333);
+}
+
+.description {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #666);
+  margin: 0;
+}
+
+.select {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 6px;
+  background: var(--bg-primary, #fff);
+  color: var(--text-primary, #333);
+  font-size: 0.875rem;
+  cursor: pointer;
+  min-width: 150px;
+}
+
+.select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--primary-color, #667eea);
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+input:disabled + .slider {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error {
+  padding: 1rem;
+  background: #fee;
+  color: #c33;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.success {
+  padding: 1rem;
+  background: #efe;
+  color: #3c3;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 4rem;
+  color: var(--text-secondary, #666);
+}
+
+@media (max-width: 768px) {
+  .providerItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .providerActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .setting {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .switch {
+    align-self: flex-end;
+  }
+
+  .select {
+    width: 100%;
+  }
+
+  .storageBreakdown {
+    grid-template-columns: 1fr;
+  }
+}
+

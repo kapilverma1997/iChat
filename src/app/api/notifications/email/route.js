@@ -29,10 +29,19 @@ export async function POST(request) {
     }
 
     const targetUser = await User.findById(userId);
-    if (!targetUser || !targetUser.notificationPreferences?.emailEnabled) {
+    if (!targetUser) {
       return NextResponse.json(
-        { error: 'User not found or email notifications disabled' },
+        { error: 'User not found' },
         { status: 404 }
+      );
+    }
+
+    // Check if email notifications are enabled (check notificationSettings.emailNotifications first)
+    const emailEnabled = targetUser.notificationSettings?.emailNotifications ?? targetUser.notificationPreferences?.emailEnabled ?? false;
+    if (!emailEnabled) {
+      return NextResponse.json(
+        { error: 'Email notifications are disabled in your settings' },
+        { status: 403 }
       );
     }
 
@@ -94,6 +103,15 @@ export async function PUT(request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    // Check if email notifications are enabled (check notificationSettings.emailNotifications first)
+    const emailEnabled = targetUser.notificationSettings?.emailNotifications ?? targetUser.notificationPreferences?.emailEnabled ?? false;
+    if (!emailEnabled) {
+      return NextResponse.json(
+        { error: 'Email notifications are disabled in your settings' },
+        { status: 403 }
+      );
+    }
+
     const interval = intervalMinutes || targetUser.notificationPreferences?.emailDigestInterval || 60;
     const since = new Date(Date.now() - interval * 60 * 1000);
 
@@ -132,7 +150,7 @@ export async function PUT(request) {
       emailBody += `<li><strong>${type}:</strong> ${grouped[type].length} notifications</li>`;
     });
 
-    emailBody += `</ul><p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard">View in iChat</a></p>`;
+    emailBody += `</ul><p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/chats">View in iChat</a></p>`;
 
     await sendEmail({
       to: targetUser.email,
@@ -158,7 +176,9 @@ function getCategoryFromType(type) {
   const categoryMap = {
     mention: 'mentions',
     message: 'directMessages',
+    group_message: 'groupMessages',
     reply: 'replies',
+    reaction: 'reactions',
     file_upload: 'fileUploads',
     system: 'system',
     admin_alert: 'adminAlerts',

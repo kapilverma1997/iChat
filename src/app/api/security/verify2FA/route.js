@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import connectDB from '../../../../../lib/mongodb.js';
 import { getAuthenticatedUser } from '../../../../../lib/auth.js';
 import User from '../../../../../models/User.js';
-import { generateOTP } from '../../../../../lib/utils.js';
+import { generateOTP, verifyPassword } from '../../../../../lib/utils.js';
 import { sendEmail, getOTPEmailTemplate } from '../../../../../lib/email.js';
 import { sendSMS } from '../../../../../lib/sms.js';
-import { verify as verifyTOTP } from '../../../../../lib/totp.js';
+import { verifyTOTP } from '../../../../../lib/totp.js';
 
 // Enable 2FA
 export async function POST(request) {
@@ -107,7 +107,12 @@ export async function PUT(request) {
 
     const userWithSecret = await User.findById(user._id).select('+otpSecret +backupCodes');
 
-    if (!userWithSecret.twoFactorEnabled) {
+    // Check if 2FA is enabled OR if we're in the process of enabling it (pending OTP verification)
+    const isEnabling2FA = !userWithSecret.twoFactorEnabled &&
+      userWithSecret.twoFactorType &&
+      userWithSecret.otpSecret;
+
+    if (!userWithSecret.twoFactorEnabled && !isEnabling2FA) {
       return NextResponse.json(
         { error: '2FA is not enabled' },
         { status: 400 }
@@ -153,6 +158,11 @@ export async function PUT(request) {
         deviceName: deviceName || 'Unknown Device',
         trustedAt: new Date(),
       });
+    }
+
+    // Enable 2FA if we're in the process of enabling it
+    if (isEnabling2FA) {
+      userWithSecret.twoFactorEnabled = true;
     }
 
     // Clear OTP after successful verification

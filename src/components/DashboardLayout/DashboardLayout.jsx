@@ -9,6 +9,7 @@ import MultiSelectBar from "../MultiSelectBar/MultiSelectBar.jsx";
 import NotificationBell from "../NotificationBell/NotificationBell.jsx";
 import NotificationCenter from "../NotificationCenter/NotificationCenter.jsx";
 import ChatLockScreen from "../ChatLockScreen/ChatLockScreen.jsx";
+import UserProfileModal from "../UserProfileModal/UserProfileModal.jsx";
 import styles from "./DashboardLayout.module.css";
 
 export default function DashboardLayout({
@@ -50,6 +51,8 @@ export default function DashboardLayout({
   const [showNotifications, setShowNotifications] = useState(false);
   const [chatLockStatus, setChatLockStatus] = useState(null);
   const [isLocked, setIsLocked] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [showUserProfile, setShowUserProfile] = useState(false);
   const otherUser = activeChat?.otherUser;
 
   const checkChatLock = async () => {
@@ -107,7 +110,14 @@ export default function DashboardLayout({
         {activeChat ? (
           <>
             <div className={styles.chatHeaderWrapper}>
-              <ChatHeader user={otherUser} chat={activeChat} />
+              <ChatHeader 
+                user={otherUser} 
+                chat={activeChat}
+                onUserClick={(userId) => {
+                  setSelectedUserId(userId);
+                  setShowUserProfile(true);
+                }}
+              />
               <div className={styles.headerActions}>
                 <NotificationBell onOpen={() => setShowNotifications(true)} />
               </div>
@@ -124,14 +134,6 @@ export default function DashboardLayout({
                   <MultiSelectBar
                     selectedCount={selectedMessages.size}
                     onDelete={onBulkDelete}
-                    onForward={() => {
-                      // TODO: Implement bulk forward
-                      console.log("Bulk forward not yet implemented");
-                    }}
-                    onTag={() => {
-                      // TODO: Implement bulk tag
-                      console.log("Bulk tag not yet implemented");
-                    }}
                     onClear={onClearSelection}
                   />
                 )}
@@ -189,6 +191,14 @@ export default function DashboardLayout({
       <NotificationCenter
         isOpen={showNotifications}
         onClose={() => setShowNotifications(false)}
+      />
+      <UserProfileModal
+        isOpen={showUserProfile}
+        onClose={() => {
+          setShowUserProfile(false);
+          setSelectedUserId(null);
+        }}
+        userId={selectedUserId}
       />
     </div>
   );

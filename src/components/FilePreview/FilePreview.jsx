@@ -9,6 +9,7 @@ export default function FilePreview({
   fileSize,
   type,
   onRemove,
+  isOwn = false,
 }) {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -67,7 +68,7 @@ export default function FilePreview({
   if (type === "image" && fileUrl && !error) {
     return (
       <>
-        <div className={styles.imagePreview}>
+        <div className={`${styles.imagePreview} ${isOwn ? styles.ownMessage : ''}`}>
           {loading && <div className={styles.loading}>Loading...</div>}
           <img
             src={fileUrl}
@@ -120,7 +121,7 @@ export default function FilePreview({
 
   if (type === "video" && fileUrl) {
     return (
-      <div className={styles.videoPreview}>
+      <div className={`${styles.videoPreview} ${isOwn ? styles.ownMessage : ''}`}>
         <video src={fileUrl} controls className={styles.video}>
           Your browser does not support the video tag.
         </video>
@@ -147,7 +148,7 @@ export default function FilePreview({
 
   return (
     <div 
-      className={styles.filePreview}
+      className={`${styles.filePreview} ${isOwn ? styles.ownMessage : ''}`}
       onClick={handleFileClick}
       style={{ cursor: fileUrl ? 'pointer' : 'default' }}
     >

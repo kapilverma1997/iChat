@@ -63,24 +63,48 @@ export default function ProfileSettingsPage() {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await fetch("/api/user/update-profile", {
+
+      // Update profile fields (name, email, phone, designation)
+      const profileResponse = await fetch("/api/user/update-profile", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.name,
+          phone: formData.phone,
+          designation: formData.designation,
+        }),
       });
 
-      if (response.ok) {
-        setSuccess("Profile updated successfully");
-        fetchUser();
-      } else {
-        const data = await response.json();
-        setError(data.error || "Failed to update profile");
+      if (!profileResponse.ok) {
+        const data = await profileResponse.json();
+        throw new Error(data.error || "Failed to update profile");
       }
+
+      // Update status fields (presenceStatus, statusMessage)
+      const statusResponse = await fetch("/api/user/update-status", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          presenceStatus: formData.presenceStatus,
+          statusMessage: formData.statusMessage,
+        }),
+      });
+
+      if (!statusResponse.ok) {
+        const data = await statusResponse.json();
+        throw new Error(data.error || "Failed to update status");
+      }
+
+      setSuccess("Profile updated successfully");
+      fetchUser();
     } catch (error) {
-      setError("Failed to update profile");
+      setError(error.message || "Failed to update profile");
     } finally {
       setSaving(false);
     }
@@ -134,40 +158,52 @@ export default function ProfileSettingsPage() {
             type="text"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder="Enter your full name"
             required
           />
           <InputBox
             label="Email"
             type="email"
             value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, email: e.target.value })
+            }
+            placeholder="Enter your email address"
             required
           />
           <InputBox
             label="Phone"
             type="tel"
             value={formData.phone}
-            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, phone: e.target.value })
+            }
+            placeholder="Enter your phone number"
           />
           <InputBox
             label="Designation"
             type="text"
             value={formData.designation}
-            onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, designation: e.target.value })
+            }
+            placeholder="Enter your job title or designation"
           />
         </div>
 
         <div className={styles.section}>
           <h3 className={styles.sectionTitle}>Status</h3>
-          <StatusBadge
+          {/* <StatusBadge
             status={formData.presenceStatus}
             onStatusChange={(status) => setFormData({ ...formData, presenceStatus: status })}
-          />
+          /> */}
           <InputBox
             label="Status Message"
             type="text"
             value={formData.statusMessage}
-            onChange={(e) => setFormData({ ...formData, statusMessage: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, statusMessage: e.target.value })
+            }
             placeholder="What's on your mind?"
             maxLength={100}
           />
@@ -182,4 +218,3 @@ export default function ProfileSettingsPage() {
     </div>
   );
 }
-

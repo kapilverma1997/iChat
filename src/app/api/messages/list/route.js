@@ -43,13 +43,13 @@ export async function GET(request) {
         { deletedFor: { $nin: [user._id] } },
       ],
     })
-      .populate('senderId', 'name email profilePhoto')
+      .populate('senderId', 'name email profilePhoto privacySettings')
       .populate('replyTo')
       .populate({
         path: 'quotedMessage',
         populate: {
           path: 'senderId',
-          select: 'name email profilePhoto'
+          select: 'name email profilePhoto privacySettings'
         }
       })
       .sort({ createdAt: -1 })
@@ -57,7 +57,10 @@ export async function GET(request) {
       .skip((page - 1) * limit)
       .lean();
 
-    // Mark messages as read
+    // Mark messages as read (when user opens chat)
+    // Import read receipt publisher
+    const { publishReadReceipt } = await import('../../../../../lib/messageProducer.js');
+    
     const unreadMessages = await Message.updateMany(
       {
         chatId,
@@ -87,13 +90,13 @@ export async function GET(request) {
             'readBy.userId': user._id,
             isDeleted: false,
           })
-            .populate('senderId', 'name email profilePhoto')
+            .populate('senderId', 'name email profilePhoto privacySettings')
             .populate('replyTo')
             .populate({
               path: 'quotedMessage',
               populate: {
                 path: 'senderId',
-                select: 'name email profilePhoto'
+                select: 'name email profilePhoto privacySettings'
               }
             })
             .lean();

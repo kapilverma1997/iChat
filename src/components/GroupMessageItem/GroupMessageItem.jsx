@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Avatar from "../Avatar/Avatar.jsx";
 import ReplyPreview from "../ReplyPreview/ReplyPreview.jsx";
 import ReactionList from "../ReactionList/ReactionList.jsx";
 import PollDisplay from "../PollDisplay/PollDisplay.jsx";
+import EventDisplay from "../EventDisplay/EventDisplay.jsx";
 import LinkPreview from "../LinkPreview/LinkPreview.jsx";
+import FilePreview from "../FilePreview/FilePreview.jsx";
 import { canDeleteMessage } from "../../../lib/groupPermissions.js";
 import { parseMarkdown, extractUrls } from "../../lib/markdown.js";
 import styles from "./GroupMessageItem.module.css";
@@ -20,8 +22,22 @@ export default function GroupMessageItem({
   onDelete,
   onThreadClick,
   onPollVoteUpdate,
+  onEventUpdate,
+  onEventClick,
+  isSelected = false,
+  onSelect,
 }) {
   const [showMenu, setShowMenu] = useState(false);
+  const [watermarkEnabled, setWatermarkEnabled] = useState(false);
+  const [chatSettings, setChatSettings] = useState({
+    showMessageTimestamps: true,
+    showAvatars: true,
+    compactMode: false,
+  });
+  const [displaySettings, setDisplaySettings] = useState({
+    fontSize: "medium",
+    messageDensity: "comfortable",
+  });
   const isOwn = message.senderId?._id?.toString() === currentUserId?.toString();
   const canDelete = canDeleteMessage(
     group,
@@ -30,6 +46,37 @@ export default function GroupMessageItem({
     currentUserId
   );
   const threadCount = message.threadCount || 0;
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const response = await fetch("/api/user/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setWatermarkEnabled(data.user?.chatSecurity?.watermarkEnabled ?? false);
+          if (data.user?.chatSettings) {
+            setChatSettings({
+              showMessageTimestamps: data.user.chatSettings.showMessageTimestamps ?? true,
+              showAvatars: data.user.chatSettings.showAvatars ?? true,
+              compactMode: data.user.chatSettings.compactMode ?? false,
+            });
+          }
+          if (data.user?.displaySettings) {
+            setDisplaySettings({
+              fontSize: data.user.displaySettings.fontSize || "medium",
+              messageDensity: data.user.displaySettings.messageDensity || "comfortable",
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching settings:", error);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const formatTime = (date) => {
     return new Date(date).toLocaleTimeString("en-US", {
@@ -48,10 +95,12 @@ export default function GroupMessageItem({
         return (
           <>
             {message.fileUrl && (
-              <img
-                src={message.fileUrl}
-                alt={message.fileName}
-                className={styles.image}
+              <FilePreview
+                fileUrl={message.fileUrl}
+                fileName={message.fileName}
+                fileSize={message.fileSize}
+                type="image"
+                isOwn={isOwn}
               />
             )}
             {message.content && message.content.trim() && (
@@ -68,7 +117,13 @@ export default function GroupMessageItem({
         return (
           <>
             {message.fileUrl && (
-              <video src={message.fileUrl} controls className={styles.video} />
+              <FilePreview
+                fileUrl={message.fileUrl}
+                fileName={message.fileName}
+                fileSize={message.fileSize}
+                type="video"
+                isOwn={isOwn}
+              />
             )}
             {message.content && message.content.trim() && (
               <div
@@ -135,7 +190,22 @@ export default function GroupMessageItem({
           />
         );
       case "event":
-        return <div className={styles.event}>📅 Event: {message.content}</div>;
+        return (
+          <EventDisplay
+            event={message.event}
+            currentUserId={currentUserId}
+            onEventUpdate={(updatedEvent) => {
+              if (updatedEvent && onEventUpdate) {
+                onEventUpdate(message._id, updatedEvent);
+              }
+            }}
+            onClick={() => {
+              if (onEventClick && message.event) {
+                onEventClick(message.event);
+              }
+            }}
+          />
+        );
       case "location":
         return (
           <div className={styles.locationMessage}>
@@ -180,6 +250,27 @@ export default function GroupMessageItem({
                 </div>
               )}
             </div>
+          </div>
+        );
+      case "gif":
+        // GIF content is a URL, display it as an image
+        return (
+          <div className={styles.gifContent}>
+            {message.content && (
+              <img
+                src={message.content}
+                alt="GIF"
+                className={styles.gifImage}
+                loading="lazy"
+              />
+            )}
+          </div>
+        );
+      case "emoji":
+      case "sticker":
+        return (
+          <div className={styles.emojiContent}>
+            <span className={styles.largeEmoji}>{message.content}</span>
           </div>
         );
       case "code":
@@ -243,15 +334,56 @@ export default function GroupMessageItem({
     }
   };
 
+  const handleMessageClick = (e) => {
+    // Only handle multi-select if clicking on the message bubble, not on buttons
+    if (
+      (e.shiftKey || e.ctrlKey || e.metaKey) &&
+      !e.target.closest(`.${styles.actions}`) &&
+      !e.target.closest(`.${styles.actionButton}`) &&
+      !e.target.closest(`.${styles.menu}`)
+    ) {
+      e.preventDefault();
+      onSelect?.(message._id?.toString());
+    }
+  };
+
+  // Build class names based on display settings
+  const fontSizeMap = {
+    'small': 'fontSizeSmall',
+    'medium': 'fontSizeMedium',
+    'large': 'fontSizeLarge',
+    'extra-large': 'fontSizeExtralarge',
+  };
+  const densityMap = {
+    'compact': 'densityCompact',
+    'comfortable': 'densityComfortable',
+    'spacious': 'densitySpacious',
+  };
+  const fontSizeClass = styles[fontSizeMap[displaySettings.fontSize]] || '';
+  const densityClass = styles[densityMap[displaySettings.messageDensity]] || '';
+  const compactClass = chatSettings.compactMode ? styles.compact : '';
+
   return (
-    <div className={`${styles.message} ${isOwn ? styles.own : ""}`}>
-      {!isOwn && (
-        <Avatar
-          src={message.senderId?.profilePhoto}
-          name={message.senderId?.name}
-          size="small"
-        />
-      )}
+    <div
+      className={`${styles.message} ${isOwn ? styles.own : ""} ${
+        isSelected ? styles.selected : ""
+      } ${fontSizeClass} ${densityClass} ${compactClass}`}
+      onClick={handleMessageClick}
+    >
+      {!isOwn && chatSettings.showAvatars && (() => {
+        // Check privacy settings for profile photo
+        const privacySettings = message.senderId?.privacySettings || {};
+        const showProfilePhoto = privacySettings.showProfilePhoto !== false; // Default to true if not set
+        const profilePhotoSrc = showProfilePhoto ? message.senderId?.profilePhoto : null;
+        
+        return (
+          <Avatar
+            src={profilePhotoSrc}
+            name={message.senderId?.name}
+            size="small"
+          />
+        );
+      })()}
       <div className={styles.content}>
         {!isOwn && (
           <div className={styles.senderName}>{message.senderId?.name}</div>
@@ -269,17 +401,26 @@ export default function GroupMessageItem({
             />
           )}
         </div>
-        <div className={styles.meta}>
-          <span className={styles.time}>{formatTime(message.createdAt)}</span>
-          {threadCount > 0 && (
-            <button
-              className={styles.threadButton}
-              onClick={() => onThreadClick(message)}
-            >
-              {threadCount} reply{threadCount > 1 ? "ies" : ""}
-            </button>
-          )}
-        </div>
+        {chatSettings.showMessageTimestamps && (
+          <div className={styles.meta}>
+            <span className={styles.time}>{formatTime(message.createdAt)}</span>
+            {threadCount > 0 && (
+              <button
+                className={styles.threadButton}
+                onClick={() => onThreadClick(message)}
+              >
+                {threadCount} reply{threadCount > 1 ? "ies" : ""}
+              </button>
+            )}
+          </div>
+        )}
+        {message.metadata?.watermark && watermarkEnabled && (
+          <div className={styles.watermark}>
+            <span className={styles.watermarkText}>
+              {message.metadata.watermark.email} • {message.metadata.watermark.userId} • {new Date(message.metadata.watermark.timestamp).toLocaleString()}
+            </span>
+          </div>
+        )}
       </div>
       <div className={styles.actions}>
         <button

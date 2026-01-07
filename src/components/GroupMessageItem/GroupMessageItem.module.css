@@ -10,6 +10,10 @@
   background: #f5f5f5;
 }
 
+.message.selected {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
 .message.own {
   flex-direction: row-reverse;
 }
@@ -49,6 +53,75 @@
   font-size: 14px;
   line-height: 1.5;
   color: #1f2937;
+}
+
+/* Font Size Classes */
+.fontSizeSmall .text,
+.fontSizeSmall .bubble {
+  font-size: 12px;
+}
+
+.fontSizeMedium .text,
+.fontSizeMedium .bubble {
+  font-size: 14px;
+}
+
+.fontSizeLarge .text,
+.fontSizeLarge .bubble {
+  font-size: 16px;
+}
+
+.fontSizeExtralarge .text,
+.fontSizeExtralarge .bubble {
+  font-size: 18px;
+}
+
+/* Message Density Classes */
+.densityCompact {
+  padding: 4px 12px;
+  gap: 4px;
+}
+
+.densityCompact .bubble {
+  padding: 8px 12px;
+}
+
+.densityComfortable {
+  padding: 8px 16px;
+  gap: 8px;
+}
+
+.densityComfortable .bubble {
+  padding: 10px 14px;
+}
+
+.densitySpacious {
+  padding: 12px 20px;
+  gap: 12px;
+}
+
+.densitySpacious .bubble {
+  padding: 12px 16px;
+}
+
+/* Compact Mode */
+.compact {
+  padding: 2px 8px;
+  gap: 4px;
+}
+
+.compact .bubble {
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.compact .meta {
+  margin-top: 2px;
+  font-size: 10px;
+}
+
+.compact .text {
+  font-size: 13px;
 }
 
 .message.own .text {
@@ -178,6 +251,30 @@
   justify-content: flex-end;
 }
 
+.watermark {
+  margin-top: 4px;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  border-left: 2px solid #9ca3af;
+}
+
+.message.own .watermark {
+  background: rgba(255, 255, 255, 0.15);
+  border-left-color: rgba(255, 255, 255, 0.5);
+}
+
+.watermarkText {
+  font-size: 9px;
+  color: #6b7280;
+  font-family: monospace;
+  opacity: 0.8;
+}
+
+.message.own .watermarkText {
+  color: rgba(255, 255, 255, 0.8);
+}
+
 .time {
   color: #9ca3af;
 }
@@ -305,6 +402,31 @@
 .contactEmail {
   font-size: 13px;
   opacity: 0.8;
+}
+
+.emojiContent {
+  text-align: center;
+  padding: 8px;
+}
+
+.largeEmoji {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.gifContent {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4px;
+}
+
+.gifImage {
+  max-width: 100%;
+  max-height: 400px;
+  border-radius: 8px;
+  object-fit: contain;
+  display: block;
 }
 
 .codeMessage {

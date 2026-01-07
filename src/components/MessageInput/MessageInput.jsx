@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import ReplyPreview from "../ReplyPreview/ReplyPreview.jsx";
 import QuotePreview from "../QuotePreview/QuotePreview.jsx";
 import EmojiPicker from "../EmojiPicker/EmojiPicker.jsx";
+import StickerPicker from "../StickerPicker/StickerPicker.jsx";
+import GifPicker from "../GifPicker/GifPicker.jsx";
 import VoiceRecorder from "../VoiceRecorder/VoiceRecorder.jsx";
 import CameraCapture from "../CameraCapture/CameraCapture.jsx";
 import FilePreview from "../FilePreview/FilePreview.jsx";
@@ -22,6 +24,8 @@ export default function MessageInput({
 }) {
   const [content, setContent] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showStickerPicker, setShowStickerPicker] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -31,6 +35,14 @@ export default function MessageInput({
   const [isMarkdownMode, setIsMarkdownMode] = useState(false);
   const [formattingMode, setFormattingMode] = useState(null); // 'bold', 'italic', 'underline'
   const [errorMessage, setErrorMessage] = useState(null);
+  const [chatSettings, setChatSettings] = useState({
+    enterToSend: true,
+    spellCheck: true,
+    typingIndicators: true,
+    allowEmojis: true,
+    allowStickers: true,
+    allowGifs: true,
+  });
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -43,6 +55,32 @@ export default function MessageInput({
   const MAX_AUDIO_SIZE = 100 * 1024 * 1024; // 100MB for audio
 
   useEffect(() => {
+    // Fetch chat settings
+    const fetchChatSettings = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const response = await fetch("/api/user/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.user?.chatSettings) {
+            setChatSettings({
+              enterToSend: data.user.chatSettings.enterToSend ?? true,
+              spellCheck: data.user.chatSettings.spellCheck ?? true,
+              typingIndicators: data.user.chatSettings.typingIndicators ?? true,
+              allowEmojis: data.user.chatSettings.allowEmojis ?? true,
+              allowStickers: data.user.chatSettings.allowStickers ?? true,
+              allowGifs: data.user.chatSettings.allowGifs ?? true,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching chat settings:", error);
+      }
+    };
+    fetchChatSettings();
+
     return () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
@@ -68,19 +106,22 @@ export default function MessageInput({
   const handleInputChange = (e) => {
     setContent(e.target.value);
 
-    if (!isTyping) {
-      setIsTyping(true);
-      onTyping?.();
-    }
+    // Only emit typing indicators if enabled
+    if (chatSettings.typingIndicators) {
+      if (!isTyping) {
+        setIsTyping(true);
+        onTyping?.();
+      }
 
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
 
-    typingTimeoutRef.current = setTimeout(() => {
-      setIsTyping(false);
-      onStopTyping?.();
-    }, 1000);
+      typingTimeoutRef.current = setTimeout(() => {
+        setIsTyping(false);
+        onStopTyping?.();
+      }, 1000);
+    }
   };
 
   const handleSend = async (messageType = "text", additionalData = {}) => {
@@ -103,6 +144,26 @@ export default function MessageInput({
     // Send emoji message
     if (messageType === "emoji" && additionalData.content) {
       await onSend(additionalData.content, replyTo, "emoji", {
+        ...additionalData,
+        quotedMessage,
+      });
+      setContent("");
+      setIsCodeMode(false);
+      setIsMarkdownMode(false);
+    }
+    // Send sticker message
+    else if (messageType === "sticker" && additionalData.content) {
+      await onSend(additionalData.content, replyTo, "sticker", {
+        ...additionalData,
+        quotedMessage,
+      });
+      setContent("");
+      setIsCodeMode(false);
+      setIsMarkdownMode(false);
+    }
+    // Send GIF message
+    else if (messageType === "gif" && additionalData.content) {
+      await onSend(additionalData.content, replyTo, "gif", {
         ...additionalData,
         quotedMessage,
       });
@@ -342,11 +403,26 @@ export default function MessageInput({
     setShowEmojiPicker(false);
   };
 
+  const handleStickerSelect = (sticker) => {
+    handleSend("sticker", { content: sticker });
+    setShowStickerPicker(false);
+  };
+
+  const handleGifSelect = (gifUrl) => {
+    handleSend("gif", { content: gifUrl });
+    setShowGifPicker(false);
+  };
+
   const handleKeyPress = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
+    // If enterToSend is enabled, Enter sends message, Shift+Enter creates new line
+    // If enterToSend is disabled, Enter creates new line, no send on Enter
+    if (chatSettings.enterToSend) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
     }
+    // If enterToSend is false, Enter creates new line (default behavior)
   };
 
   const applyFormatting = (format) => {
@@ -602,13 +678,45 @@ export default function MessageInput({
           accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
         />
 
-        <button
-          className={styles.emojiButton}
-          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-          title="Emoji"
-        >
-          😊
-        </button>
+        {chatSettings.allowEmojis && (
+          <button
+            className={styles.emojiButton}
+            onClick={() => {
+              setShowEmojiPicker(!showEmojiPicker);
+              setShowStickerPicker(false);
+              setShowGifPicker(false);
+            }}
+            title="Emoji"
+          >
+            😊
+          </button>
+        )}
+        {chatSettings.allowStickers && (
+          <button
+            className={styles.emojiButton}
+            onClick={() => {
+              setShowStickerPicker(!showStickerPicker);
+              setShowEmojiPicker(false);
+              setShowGifPicker(false);
+            }}
+            title="Stickers"
+          >
+            🎨
+          </button>
+        )}
+        {chatSettings.allowGifs && (
+          <button
+            className={styles.emojiButton}
+            onClick={() => {
+              setShowGifPicker(!showGifPicker);
+              setShowEmojiPicker(false);
+              setShowStickerPicker(false);
+            }}
+            title="GIFs"
+          >
+            GIF
+          </button>
+        )}
 
         <textarea
           ref={inputRef}
@@ -616,6 +724,7 @@ export default function MessageInput({
           value={content}
           onChange={handleInputChange}
           onKeyPress={handleKeyPress}
+          spellCheck={chatSettings.spellCheck}
           placeholder={
             isCodeMode
               ? "Enter code..."
@@ -640,6 +749,20 @@ export default function MessageInput({
           onSelect={handleEmojiSelect}
           isOpen={showEmojiPicker}
           onClose={() => setShowEmojiPicker(false)}
+        />
+      )}
+      {showStickerPicker && (
+        <StickerPicker
+          onSelect={handleStickerSelect}
+          isOpen={showStickerPicker}
+          onClose={() => setShowStickerPicker(false)}
+        />
+      )}
+      {showGifPicker && (
+        <GifPicker
+          onSelect={handleGifSelect}
+          isOpen={showGifPicker}
+          onClose={() => setShowGifPicker(false)}
         />
       )}
     </div>

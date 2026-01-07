@@ -3,7 +3,9 @@ import connectDB from '../../../../../lib/mongodb.js';
 import { getAuthenticatedUser } from '../../../../../lib/auth.js';
 import Chat from '../../../../../models/Chat.js';
 import Message from '../../../../../models/Message.js';
+import User from '../../../../../models/User.js';
 import { getIO } from '../../../../../lib/socket.js';
+import { notifyReaction } from '../../../../../lib/notifications.js';
 
 export async function POST(request) {
   try {
@@ -41,7 +43,9 @@ export async function POST(request) {
       (r) => r.userId.toString() === user._id.toString() && r.emoji === emoji
     );
 
-    if (existingReactionIndex !== -1) {
+    const isRemoving = existingReactionIndex !== -1;
+    
+    if (isRemoving) {
       // Remove reaction
       message.reactions.splice(existingReactionIndex, 1);
     } else {
@@ -67,6 +71,34 @@ export async function POST(request) {
       });
     } catch (socketError) {
       console.error('Socket error:', socketError);
+    }
+
+    // Send notification to message sender if reaction was added (not removed)
+    // Only send if the sender is different from the person reacting
+    if (!isRemoving && message.senderId.toString() !== user._id.toString()) {
+      try {
+        const sender = await User.findById(message.senderId).select('name notificationSettings notificationPreferences');
+        if (sender) {
+          // Check if reaction notifications are enabled
+          const reactionNotificationsEnabled = sender.notificationSettings?.reactionNotifications ?? 
+                                               sender.notificationPreferences?.categories?.reactions ?? 
+                                               true;
+          
+          if (reactionNotificationsEnabled) {
+            await notifyReaction({
+              userId: message.senderId.toString(),
+              senderName: user.name || 'Someone',
+              emoji,
+              chatId: message.chatId.toString(),
+              messageId: message._id.toString(),
+              isGroupMessage: false,
+            });
+          }
+        }
+      } catch (notifError) {
+        console.error('Error sending reaction notification:', notifError);
+        // Don't fail the request if notification fails
+      }
     }
 
     return NextResponse.json({

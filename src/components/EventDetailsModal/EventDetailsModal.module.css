@@ -1,0 +1,133 @@
+.eventDetailsModal {
+  max-width: 600px;
+  width: 100%;
+}
+
+.eventHeader {
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+  margin: 0;
+  flex: 1;
+}
+
+.badgeCancelled {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  background: #dc3545;
+  color: white;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.badgePast {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  background: #6c757d;
+  color: white;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.eventInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.infoRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #666);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.value {
+  font-size: 1rem;
+  color: var(--text-primary, #333);
+  font-weight: 500;
+}
+
+.description {
+  font-size: 0.9375rem;
+  color: var(--text-primary, #333);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.rsvpSection {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.attendeesSection {
+  margin-top: 1rem;
+}
+
+.sectionTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+  margin: 0 0 1rem 0;
+}
+
+.attendeeGroup {
+  margin-bottom: 1.25rem;
+}
+
+.attendeeGroupHeader {
+  margin-bottom: 0.75rem;
+}
+
+.attendeeStatus {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+}
+
+.attendeeList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-left: 1rem;
+}
+
+.attendee {
+  padding: 0.5rem;
+  background: var(--bg-secondary, #f8f9fa);
+  border-radius: 6px;
+}
+
+.attendeeName {
+  font-size: 0.9375rem;
+  color: var(--text-primary, #333);
+}
+
+.noAttendees {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary, #666);
+  font-style: italic;
+}
+

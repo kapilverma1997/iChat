@@ -27,7 +27,7 @@ const NotificationSchema = new Schema(
     },
     category: {
       type: String,
-      enum: ['mentions', 'direct_messages', 'replies', 'file_uploads', 'system', 'admin_alerts', 'group_invites'],
+      enum: ['mentions', 'direct_messages', 'group_messages', 'replies', 'reactions', 'file_uploads', 'system', 'admin_alerts', 'group_invites'],
       default: 'direct_messages',
     },
     title: {

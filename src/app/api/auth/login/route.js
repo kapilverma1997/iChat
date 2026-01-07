@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import connectDB from '../../../../../lib/mongodb.js';
 import User from '../../../../../models/User.js';
-import { verifyPassword, generateAccessToken, generateRefreshToken, isValidEmail } from '../../../../../lib/utils.js';
+import { verifyPassword, generateAccessToken, generateRefreshToken, isValidEmail, generateOTP } from '../../../../../lib/utils.js';
 import Session from '../../../../../models/Session.js';
+import { sendEmail, getOTPEmailTemplate } from '../../../../../lib/email.js';
+import { sendSMS } from '../../../../../lib/sms.js';
 
 export async function POST(request) {
   try {
@@ -39,6 +41,81 @@ export async function POST(request) {
       );
     }
 
+    // Check if 2FA is enabled
+    if (user.twoFactorEnabled && user.twoFactorType) {
+      // Generate OTP for email/SMS or require TOTP for authenticator
+      if (user.twoFactorType === 'email') {
+        // Generate OTP and send via email
+        const otp = generateOTP(6);
+        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        // Store OTP in Session
+        await Session.create({
+          userId: user._id,
+          token: otp,
+          type: 'otp',
+          expiresAt: otpExpiry,
+          ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
+          userAgent: request.headers.get('user-agent') || undefined,
+        });
+
+        // Send OTP via email
+        await sendEmail({
+          to: user.email,
+          subject: 'Your iChat Login Verification Code',
+          html: getOTPEmailTemplate(otp, user.name),
+          text: `Your login verification code is: ${otp}. It will expire in 10 minutes.`,
+        });
+
+        return NextResponse.json({
+          message: '2FA verification required',
+          requires2FA: true,
+          twoFactorType: 'email',
+        }, { status: 200 });
+      } else if (user.twoFactorType === 'sms') {
+        if (!user.phone) {
+          return NextResponse.json(
+            { error: 'Phone number not found for SMS 2FA' },
+            { status: 400 }
+          );
+        }
+
+        // Generate OTP and send via SMS
+        const otp = generateOTP(6);
+        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        // Store OTP in Session
+        await Session.create({
+          userId: user._id,
+          token: otp,
+          type: 'otp',
+          expiresAt: otpExpiry,
+          ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
+          userAgent: request.headers.get('user-agent') || undefined,
+        });
+
+        // Send OTP via SMS
+        await sendSMS({
+          to: user.phone,
+          message: `Your iChat login verification code is: ${otp}. Valid for 10 minutes.`,
+        });
+
+        return NextResponse.json({
+          message: '2FA verification required',
+          requires2FA: true,
+          twoFactorType: 'sms',
+        }, { status: 200 });
+      } else if (user.twoFactorType === 'authenticator') {
+        // For authenticator, just indicate that TOTP code is required
+        return NextResponse.json({
+          message: '2FA verification required',
+          requires2FA: true,
+          twoFactorType: 'authenticator',
+        }, { status: 200 });
+      }
+    }
+
+    // No 2FA enabled, proceed with normal login
     // Update presence status and last seen
     user.presenceStatus = 'online';
     user.lastSeen = new Date();

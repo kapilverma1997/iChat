@@ -37,6 +37,9 @@ export default function DashboardPage() {
   const [scheduleMessage, setScheduleMessage] = useState(null);
   const [reminderMessage, setReminderMessage] = useState(null);
   const [selectedMessages, setSelectedMessages] = useState(new Set());
+  const [chatSettings, setChatSettings] = useState({
+    markAsReadOnReply: true,
+  });
   const { socket, connected } = useSocket();
   const typingTimeoutRef = useRef({});
 
@@ -117,6 +120,12 @@ export default function DashboardPage() {
 
       const data = await response.json();
       setUser(data.user);
+      // Load chat settings
+      if (data.user?.chatSettings) {
+        setChatSettings({
+          markAsReadOnReply: data.user.chatSettings.markAsReadOnReply ?? true,
+        });
+      }
     } catch (error) {
       console.error("Error fetching user:", error);
       router.push("/auth/login");
@@ -215,55 +224,51 @@ export default function DashboardPage() {
     }
   };
 
-  const markMessagesAsRead = useCallback(
-    async (messageIds, chatId) => {
-      try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return;
+  const markMessagesAsRead = useCallback(async (messageIds, chatId) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
 
-        const response = await fetch("/api/messages/mark-read", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            messageIds,
-            chatId,
-          }),
-        });
+      const response = await fetch("/api/messages/mark-read", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          messageIds,
+          chatId,
+        }),
+      });
 
-        if (response.ok) {
-          const data = await response.json();
-          // Update messages with readBy information
-          if (data.messages && data.messages.length > 0) {
-            setMessages((prev) =>
-              prev.map((msg) => {
-                const updatedMessage = data.messages.find(
-                  (updatedMsg) =>
-                    updatedMsg._id?.toString() === msg._id?.toString()
-                );
-                if (updatedMessage) {
-                  return {
-                    ...msg,
-                    readBy: updatedMessage.readBy || msg.readBy,
-                  };
-                }
-                return msg;
-              })
-            );
-          }
+      if (response.ok) {
+        const data = await response.json();
+        // Update messages with readBy information
+        if (data.messages && data.messages.length > 0) {
+          setMessages((prev) =>
+            prev.map((msg) => {
+              const updatedMessage = data.messages.find(
+                (updatedMsg) =>
+                  updatedMsg._id?.toString() === msg._id?.toString()
+              );
+              if (updatedMessage) {
+                return {
+                  ...msg,
+                  readBy: updatedMessage.readBy || msg.readBy,
+                };
+              }
+              return msg;
+            })
+          );
         }
-      } catch (error) {
-        console.error("Error marking messages as read:", error);
       }
-    },
-    []
-  );
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+    }
+  }, []);
 
   const handleReceiveMessage = useCallback(
     (data) => {
-      console.log("Received message via socket:", data);
       // Convert chatId to string for comparison
       const receivedChatId = data.chatId?.toString();
       const currentChatId = activeChat?._id?.toString();
@@ -271,7 +276,9 @@ export default function DashboardPage() {
       // If this message is for the currently active chat, add it to messages
       if (activeChat && receivedChatId === currentChatId) {
         const messageId = data.message?._id?.toString();
-        const senderId = data.message?.senderId?._id?.toString() || data.message?.senderId?.toString();
+        const senderId =
+          data.message?.senderId?._id?.toString() ||
+          data.message?.senderId?.toString();
         const currentUserId = user?._id?.toString();
 
         // Check if message already exists to avoid duplicates
@@ -293,8 +300,16 @@ export default function DashboardPage() {
         });
 
         // If message is not sent by current user and chat is active, mark it as read immediately
-        if (messageId && senderId && currentUserId && senderId !== currentUserId) {
-          console.log("Marking incoming message as read in real-time:", messageId);
+        if (
+          messageId &&
+          senderId &&
+          currentUserId &&
+          senderId !== currentUserId
+        ) {
+          console.log(
+            "Marking incoming message as read in real-time:",
+            messageId
+          );
           markMessagesAsRead([messageId], receivedChatId);
         }
       } else {
@@ -447,7 +462,11 @@ export default function DashboardPage() {
         data.chatId?.toString() === activeChat._id?.toString()
       ) {
         // Handle both new format (with messages array) and old format
-        if (data.messages && Array.isArray(data.messages) && data.messages.length > 0) {
+        if (
+          data.messages &&
+          Array.isArray(data.messages) &&
+          data.messages.length > 0
+        ) {
           // Update messages with new readBy information
           setMessages((prev) =>
             prev.map((msg) => {
@@ -580,6 +599,16 @@ export default function DashboardPage() {
             if (exists) return prev;
             return [...prev, data.message];
           });
+          
+          // Mark as read on reply if enabled and there's a reply
+          if (chatSettings.markAsReadOnReply && replyToMessage?._id) {
+            try {
+              await markMessagesAsRead([replyToMessage._id], activeChat._id);
+            } catch (error) {
+              console.error("Error marking message as read on reply:", error);
+            }
+          }
+          
           setReplyTo(null);
           setQuotedMessage(null);
           fetchChats();
@@ -617,6 +646,16 @@ export default function DashboardPage() {
           if (exists) return prev;
           return [...prev, data.message];
         });
+        
+        // Mark as read on reply if enabled and there's a reply
+        if (chatSettings.markAsReadOnReply && replyToMessage?._id) {
+          try {
+            await markMessagesAsRead([replyToMessage._id], activeChat._id);
+          } catch (error) {
+            console.error("Error marking message as read on reply:", error);
+          }
+        }
+        
         setReplyTo(null);
         setQuotedMessage(null);
         fetchChats();

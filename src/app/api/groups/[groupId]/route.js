@@ -18,7 +18,7 @@ export async function GET(request, { params }) {
     const { groupId } = await params;
 
     const group = await Group.findById(groupId)
-      .populate('members.userId', 'name email profilePhoto presenceStatus lastSeen')
+      .populate('members.userId', 'name email profilePhoto presenceStatus lastSeen privacySettings chatSettings')
       .populate('createdBy', 'name email profilePhoto')
       .populate('joinRequests.userId', 'name email profilePhoto')
       .populate('bannedUsers.userId', 'name email profilePhoto')
@@ -38,9 +38,29 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
+    // Filter presenceStatus for members if showOnlineStatus is false
+    const groupObj = group.toObject();
+    if (groupObj.members) {
+      groupObj.members = groupObj.members.map((member) => {
+        if (member.userId && member.userId.chatSettings) {
+          const showOnlineStatus = member.userId.chatSettings.showOnlineStatus !== false;
+          if (!showOnlineStatus) {
+            return {
+              ...member,
+              userId: {
+                ...member.userId,
+                presenceStatus: undefined,
+              },
+            };
+          }
+        }
+        return member;
+      });
+    }
+
     return NextResponse.json({
       group: {
-        ...group.toObject(),
+        ...groupObj,
         userRole,
         isMember,
         memberCount: group.members.length,
@@ -97,7 +117,7 @@ export async function PUT(request, { params }) {
 
     await group.save();
 
-    await group.populate('members.userId', 'name email profilePhoto');
+    await group.populate('members.userId', 'name email profilePhoto privacySettings');
     await group.populate('createdBy', 'name email profilePhoto');
 
     // Emit socket event

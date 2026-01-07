@@ -145,7 +145,9 @@ const UserSchema = new Schema(
       categories: {
         mentions: { type: Boolean, default: true },
         directMessages: { type: Boolean, default: true },
+        groupMessages: { type: Boolean, default: true },
         replies: { type: Boolean, default: true },
+        reactions: { type: Boolean, default: true },
         fileUploads: { type: Boolean, default: true },
         system: { type: Boolean, default: true },
         adminAlerts: { type: Boolean, default: true },
@@ -159,6 +161,69 @@ const UserSchema = new Schema(
         type: String,
         default: '',
       },
+    },
+    // Notification settings (for settings page)
+    notificationSettings: {
+      pushNotifications: {
+        type: Boolean,
+        default: true,
+      },
+      desktopNotifications: {
+        type: Boolean,
+        default: true,
+      },
+      emailNotifications: {
+        type: Boolean,
+        default: false,
+      },
+      soundEnabled: {
+        type: Boolean,
+        default: true,
+      },
+      notificationPreview: {
+        type: Boolean,
+        default: true,
+      },
+      showNotificationBadge: {
+        type: Boolean,
+        default: true,
+      },
+      groupNotifications: {
+        type: Boolean,
+        default: true,
+      },
+      directMessageNotifications: {
+        type: Boolean,
+        default: true,
+      },
+      mentionNotifications: {
+        type: Boolean,
+        default: true,
+      },
+      reactionNotifications: {
+        type: Boolean,
+        default: false,
+      },
+    },
+    // Quiet hours settings
+    quietHours: {
+      enabled: {
+        type: Boolean,
+        default: false,
+      },
+      startTime: {
+        type: String,
+        default: '22:00',
+      },
+      endTime: {
+        type: String,
+        default: '08:00',
+      },
+    },
+    // Notification sound preference
+    notificationSound: {
+      type: String,
+      default: 'default',
     },
     // Push notification subscription
     pushSubscription: {
@@ -189,6 +254,134 @@ const UserSchema = new Schema(
       disableDownload: {
         type: Boolean,
         default: false,
+      },
+    },
+    // Chat preferences/settings
+    chatSettings: {
+      readReceipts: {
+        type: Boolean,
+        default: true,
+      },
+      typingIndicators: {
+        type: Boolean,
+        default: true,
+      },
+      linkPreviews: {
+        type: Boolean,
+        default: true,
+      },
+      spellCheck: {
+        type: Boolean,
+        default: true,
+      },
+      enterToSend: {
+        type: Boolean,
+        default: true,
+      },
+      markAsReadOnReply: {
+        type: Boolean,
+        default: true,
+      },
+      autoDownloadMedia: {
+        type: Boolean,
+        default: true,
+      },
+      showOnlineStatus: {
+        type: Boolean,
+        default: true,
+      },
+      showLastSeen: {
+        type: Boolean,
+        default: true,
+      },
+      showMessageTimestamps: {
+        type: Boolean,
+        default: true,
+      },
+      compactMode: {
+        type: Boolean,
+        default: false,
+      },
+      showAvatars: {
+        type: Boolean,
+        default: true,
+      },
+      showReactions: {
+        type: Boolean,
+        default: true,
+      },
+      allowEmojis: {
+        type: Boolean,
+        default: true,
+      },
+      allowStickers: {
+        type: Boolean,
+        default: true,
+      },
+      allowGifs: {
+        type: Boolean,
+        default: true,
+      },
+    },
+    // Media settings
+    mediaSettings: {
+      imageQuality: {
+        type: String,
+        enum: ['low', 'medium', 'high'],
+        default: 'high',
+      },
+      videoQuality: {
+        type: String,
+        enum: ['low', 'medium', 'high'],
+        default: 'high',
+      },
+      autoDownloadSizeLimit: {
+        type: Number,
+        default: 10, // MB
+      },
+      compressImages: {
+        type: Boolean,
+        default: false,
+      },
+    },
+    // Message history settings
+    messageHistorySettings: {
+      autoDeleteEnabled: {
+        type: Boolean,
+        default: false,
+      },
+      autoDeleteDays: {
+        type: Number,
+        default: 30,
+      },
+      backupEnabled: {
+        type: Boolean,
+        default: false,
+      },
+      archiveOldChats: {
+        type: Boolean,
+        default: false,
+      },
+      archiveAfterDays: {
+        type: Number,
+        default: 90,
+      },
+    },
+    // Display settings
+    displaySettings: {
+      fontSize: {
+        type: String,
+        enum: ['small', 'medium', 'large', 'extra-large'],
+        default: 'medium',
+      },
+      messageDensity: {
+        type: String,
+        enum: ['compact', 'comfortable', 'spacious'],
+        default: 'comfortable',
+      },
+      theme: {
+        type: String,
+        default: 'default',
       },
     },
     // User role for RBAC

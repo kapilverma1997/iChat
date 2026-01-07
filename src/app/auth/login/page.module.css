@@ -55,6 +55,16 @@
   text-align: center;
 }
 
+.twoFactorMessage {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 16px 0;
+  text-align: center;
+  padding: 12px;
+  background: #f3f4f6;
+  border-radius: 8px;
+}
+
 .error {
   background: #fee2e2;
   color: #dc2626;

@@ -36,22 +36,22 @@ export default function DashboardSidebar({ chats, groups, currentUserId }) {
       items: [
         {
           label: getTranslation(lang, "allChats"),
-          href: "/dashboard",
+          href: "/chats",
           icon: "💬",
         },
         {
           label: getTranslation(lang, "archivedChats"),
-          href: "/dashboard/archived",
+          href: "/chats/archived",
           icon: "📦",
         },
         {
           label: getTranslation(lang, "pinnedMessages"),
-          href: "/dashboard/pinned",
+          href: "/chats/pinned",
           icon: "📌",
         },
         {
           label: getTranslation(lang, "drafts"),
-          href: "/dashboard/drafts",
+          href: "/chats/drafts",
           icon: "📝",
         },
       ],
@@ -162,14 +162,16 @@ export default function DashboardSidebar({ chats, groups, currentUserId }) {
   ];
 
   const isActive = (href) => {
-    if (href === "/dashboard") {
-      return pathname === "/dashboard";
+    if (href === "/chats") {
+      return pathname === "/chats";
     }
     return pathname.startsWith(href);
   };
 
   return (
-    <aside className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ""}`}>
+    <aside
+      className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ""}`}
+    >
       <div className={styles.sidebarHeader}>
         <button
           className={styles.collapseButton}
@@ -194,7 +196,9 @@ export default function DashboardSidebar({ chats, groups, currentUserId }) {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`${styles.navItem} ${isActive(item.href) ? styles.active : ""}`}
+                    className={`${styles.navItem} ${
+                      isActive(item.href) ? styles.active : ""
+                    }`}
                     title={isCollapsed ? item.label : ""}
                   >
                     <span className={styles.navIcon}>{item.icon}</span>
@@ -220,4 +224,3 @@ export default function DashboardSidebar({ chats, groups, currentUserId }) {
     </aside>
   );
 }
-

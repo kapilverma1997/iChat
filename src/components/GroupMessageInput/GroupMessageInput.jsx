@@ -70,16 +70,28 @@ export default function GroupMessageInput({
     const value = e.target.value;
     setContent(value);
 
-    // Detect @mentions
+    // Detect @mentions - match @ followed by word characters (letters, numbers, underscore)
+    // This will match @username, @john, etc.
     const mentionRegex = /@(\w+)/g;
     const matches = [...value.matchAll(mentionRegex)];
-    const newMentions = matches.map((match) => ({
-      type: "user",
-      username: match[1],
-    }));
+    const newMentions = [];
+    
+    // Process each match
+    matches.forEach((match) => {
+      const username = match[1].toLowerCase();
+      // Skip @everyone as it's handled separately
+      if (username !== "everyone") {
+        newMentions.push({
+          type: "user",
+          username: match[1], // Keep original case for display
+        });
+      }
+    });
 
-    // Detect @everyone
-    if (value.includes("@everyone")) {
+    // Detect @everyone (case-insensitive)
+    if (/\@everyone\b/i.test(value)) {
+      // Remove any duplicate user mentions if @everyone is present
+      newMentions.length = 0;
       newMentions.push({ type: "everyone" });
     }
 
@@ -104,7 +116,7 @@ export default function GroupMessageInput({
     }
   };
 
-  const handleFileSend = async (file, type = null, metadata = {}) => {
+  const handleFileSend = async (file, type = null, metadata = {}, fileContent = null) => {
     if (!group?._id) {
       console.error("Group ID is required for file upload");
       showError("Group ID is required for file upload");
@@ -170,12 +182,21 @@ export default function GroupMessageInput({
           }
         }
 
-        await onSend(content || "", replyTo?._id, messageType, {
+        // Process mentions for file messages
+        const processedMentions = processMentions();
+        const result = await onSend(fileContent || content || "", replyTo?._id, messageType, {
           fileUrl,
           fileName,
           fileSize,
           metadata: data.file.metadata || {},
+          mentions: processedMentions,
         });
+        
+        // Check if onSend returned an error
+        if (result && !result.success && result.error) {
+          showError(result.error);
+          return; // Stop processing, don't throw
+        }
         return data;
       } else {
         const errorData = await response
@@ -231,6 +252,50 @@ export default function GroupMessageInput({
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Convert mentions from usernames to userIds
+  const processMentions = () => {
+    if (!mentions.length || !group?.members) return [];
+
+    const processedMentions = [];
+    const addedUserIds = new Set(); // Track added userIds to avoid duplicates
+    
+    for (const mention of mentions) {
+      if (mention.type === "everyone") {
+        processedMentions.push({ type: "everyone" });
+      } else if (mention.type === "user" && mention.username) {
+        // Find user by name - try exact match first, then partial match
+        const usernameLower = mention.username.toLowerCase();
+        let member = group.members.find((m) => {
+          const memberName = (m.userId?.name || "").toLowerCase();
+          // Try exact match first
+          return memberName === usernameLower;
+        });
+        
+        // If no exact match, try partial match (starts with)
+        if (!member) {
+          member = group.members.find((m) => {
+            const memberName = (m.userId?.name || "").toLowerCase();
+            return memberName.startsWith(usernameLower) || memberName.includes(usernameLower);
+          });
+        }
+        
+        if (member && member.userId?._id) {
+          const userIdStr = member.userId._id.toString();
+          // Avoid duplicates
+          if (!addedUserIds.has(userIdStr)) {
+            addedUserIds.add(userIdStr);
+            processedMentions.push({
+              type: "user",
+              userId: member.userId._id,
+            });
+          }
+        }
+      }
+    }
+    
+    return processedMentions;
+  };
+
   const handleSend = async (messageType = "text", additionalData = {}) => {
     if (!canSend || isReadOnly) return;
 
@@ -248,54 +313,79 @@ export default function GroupMessageInput({
       return;
     }
 
+    // Process mentions: convert usernames to userIds
+    const processedMentions = processMentions();
+
+    // Clear input immediately for instant feedback
+    const contentToSend = messageContent;
+    const filesToSend = [...selectedFiles];
+    setContent("");
+    setIsCodeMode(false);
+    setIsMarkdownMode(false);
+    setSelectedFiles([]);
+    setMentions([]);
+    if (replyTo) {
+      onCancelReply?.();
+    }
+    if (socket && group?._id) {
+      socket.emit("groupStopTyping", { groupId: group._id, userId: "current" });
+    }
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
     // Send emoji message
     if (messageType === "emoji" && additionalData.content) {
-      await onSend(additionalData.content, replyTo?._id, "emoji", {
+      const result = await onSend(additionalData.content, replyTo?._id, "emoji", {
         ...additionalData,
+        mentions: processedMentions,
       });
-      setContent("");
-      setIsCodeMode(false);
-      setIsMarkdownMode(false);
+      if (result && !result.success && result.error) {
+        showError(result.error);
+      }
     }
     // Send contact message
     else if (messageType === "contact") {
-      await onSend(additionalData.content || "", replyTo?._id, "contact", {
+      const result = await onSend(additionalData.content || "", replyTo?._id, "contact", {
         ...additionalData,
+        mentions: processedMentions,
       });
-      setContent("");
-      setIsCodeMode(false);
-      setIsMarkdownMode(false);
+      if (result && !result.success && result.error) {
+        showError(result.error);
+      }
     }
     // Send location message
     else if (messageType === "location") {
-      await onSend(additionalData.content || "", replyTo?._id, "location", {
+      const result = await onSend(additionalData.content || "", replyTo?._id, "location", {
         ...additionalData,
+        mentions: processedMentions,
       });
-      setContent("");
-      setIsCodeMode(false);
-      setIsMarkdownMode(false);
+      if (result && !result.success && result.error) {
+        showError(result.error);
+      }
     }
     // Send text message
-    else if (messageContent && messageType === "text") {
+    else if (contentToSend && messageType === "text") {
       const finalType = isCodeMode
         ? "code"
         : isMarkdownMode
         ? "markdown"
         : "text";
-      await onSend(messageContent, replyTo?._id, finalType, {
+      const result = await onSend(contentToSend, replyTo?._id, finalType, {
         ...additionalData,
+        mentions: processedMentions,
       });
-      setContent("");
-      setIsCodeMode(false);
-      setIsMarkdownMode(false);
+      if (result && !result.success && result.error) {
+        showError(result.error);
+      }
     }
 
     // Send file messages
-    if (selectedFiles.length > 0) {
-      for (const file of selectedFiles) {
-        await handleFileSend(file);
+    if (filesToSend.length > 0) {
+      for (const file of filesToSend) {
+        await handleFileSend(file, null, {}, contentToSend || "");
+        // Error already displayed in handleFileSend if it occurred
       }
-      setSelectedFiles([]);
     }
 
     // Send voice/camera files
@@ -305,17 +395,7 @@ export default function GroupMessageInput({
         messageType,
         additionalData.metadata
       );
-    }
-
-    if (replyTo) {
-      onCancelReply?.();
-    }
-    setMentions([]);
-    if (socket && group?._id) {
-      socket.emit("groupStopTyping", { groupId: group._id, userId: "current" });
-    }
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
+      // Error already displayed in handleFileSend if it occurred
     }
   };
 

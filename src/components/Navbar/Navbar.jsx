@@ -54,10 +54,7 @@ export default function Navbar() {
     <nav className={styles.navbar}>
       <Container>
         <div className={styles.navbarContent}>
-          <Link
-            href={isAuthenticated ? "/dashboard" : "/"}
-            className={styles.logo}
-          >
+          <Link href={isAuthenticated ? "/chats" : "/"} className={styles.logo}>
             <div className={styles.logoContainer}>
               <div className={styles.logoIconWrapper}>
                 <svg

@@ -2,9 +2,11 @@
   width: 260px;
   background: var(--bg-secondary, #f8f9fa);
   border-right: 1px solid var(--border-color, #e0e0e0);
-  height: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  position: sticky;
+  top: 0;
 }
 
 .header {

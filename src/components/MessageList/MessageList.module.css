@@ -7,6 +7,22 @@
   gap: 4px;
 }
 
+/* Message Density adjustments for list */
+.list.densityCompact {
+  gap: 2px;
+  padding: 8px 0;
+}
+
+.list.densityComfortable {
+  gap: 4px;
+  padding: 16px 0;
+}
+
+.list.densitySpacious {
+  gap: 8px;
+  padding: 24px 0;
+}
+
 .typing {
   padding: 8px 16px;
   font-style: italic;

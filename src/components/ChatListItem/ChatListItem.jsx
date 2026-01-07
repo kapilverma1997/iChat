@@ -43,6 +43,15 @@ export default function ChatListItem({
   const lastMessage = chat.lastMessage;
   const unreadCount = chat.unreadCount || 0;
 
+  // Check privacy settings for profile photo
+  const privacySettings = otherUser?.privacySettings || {};
+  const showProfilePhoto = privacySettings.showProfilePhoto !== false; // Default to true if not set
+  const profilePhotoSrc = showProfilePhoto ? otherUser?.profilePhoto : null;
+
+  // Check chat settings for online status visibility
+  const chatSettings = otherUser?.chatSettings || {};
+  const showOnlineStatus = chatSettings.showOnlineStatus !== false; // Default to true if not set
+
   const formatTime = (date) => {
     if (!date) return "";
     const messageDate = new Date(date);
@@ -71,10 +80,10 @@ export default function ChatListItem({
       onClick={onClick}
     >
       <Avatar
-        src={otherUser?.profilePhoto}
+        src={profilePhotoSrc}
         name={otherUser?.name}
         size="medium"
-        status={otherUser?.presenceStatus}
+        status={showOnlineStatus ? otherUser?.presenceStatus : null}
       />
       <div className={styles.content}>
         <div className={styles.header}>

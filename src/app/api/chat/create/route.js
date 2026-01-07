@@ -33,14 +33,28 @@ export async function POST(request) {
     // Check if chat already exists
     let chat = await Chat.findOne({
       participants: { $all: [user._id, otherUser._id] },
-    }).populate('participants', 'name email profilePhoto presenceStatus lastSeen');
+    }).populate('participants', 'name email profilePhoto presenceStatus lastSeen chatSettings');
 
     if (chat) {
+      // Filter presenceStatus if showOnlineStatus is false
+      const participants = chat.participants.map((participant) => {
+        if (participant.chatSettings) {
+          const showOnlineStatus = participant.chatSettings.showOnlineStatus !== false;
+          if (!showOnlineStatus && participant._id.toString() !== user._id.toString()) {
+            return {
+              ...participant.toObject(),
+              presenceStatus: undefined,
+            };
+          }
+        }
+        return participant;
+      });
+      
       return NextResponse.json({
         message: 'Chat already exists',
         chat: {
           _id: chat._id,
-          participants: chat.participants,
+          participants,
           lastMessage: chat.lastMessage,
           lastMessageAt: chat.lastMessageAt,
           unreadCount: Object.fromEntries(chat.unreadCount || new Map()),
@@ -55,13 +69,27 @@ export async function POST(request) {
       unreadCount: new Map([[user._id.toString(), 0], [otherUser._id.toString(), 0]]),
     });
 
-    await chat.populate('participants', 'name email profilePhoto presenceStatus lastSeen');
+    await chat.populate('participants', 'name email profilePhoto presenceStatus lastSeen chatSettings');
+
+    // Filter presenceStatus if showOnlineStatus is false
+    const participants = chat.participants.map((participant) => {
+      if (participant.chatSettings) {
+        const showOnlineStatus = participant.chatSettings.showOnlineStatus !== false;
+        if (!showOnlineStatus && participant._id.toString() !== user._id.toString()) {
+          return {
+            ...participant.toObject(),
+            presenceStatus: undefined,
+          };
+        }
+      }
+      return participant;
+    });
 
     return NextResponse.json({
       message: 'Chat created successfully',
       chat: {
         _id: chat._id,
-        participants: chat.participants,
+        participants,
         lastMessage: chat.lastMessage,
         lastMessageAt: chat.lastMessageAt,
         unreadCount: Object.fromEntries(chat.unreadCount || new Map()),

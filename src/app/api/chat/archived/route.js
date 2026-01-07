@@ -18,7 +18,7 @@ export async function GET(request) {
       participants: user._id,
       isArchived: true,
     })
-      .populate('participants', 'name email profilePhoto presenceStatus lastSeen')
+      .populate('participants', 'name email profilePhoto presenceStatus lastSeen privacySettings chatSettings')
       .populate('lastMessage')
       .sort({ lastMessageAt: -1, createdAt: -1 })
       .lean();
@@ -59,9 +59,21 @@ export async function GET(request) {
         }
       }
 
+      // Filter presenceStatus if showOnlineStatus is false
+      let filteredOtherUser = otherParticipant;
+      if (otherParticipant && otherParticipant.chatSettings) {
+        const showOnlineStatus = otherParticipant.chatSettings.showOnlineStatus !== false;
+        if (!showOnlineStatus) {
+          filteredOtherUser = {
+            ...otherParticipant,
+            presenceStatus: undefined,
+          };
+        }
+      }
+
       return {
         _id: chat._id,
-        otherUser: otherParticipant,
+        otherUser: filteredOtherUser,
         lastMessage: lastMessage,
         lastMessageAt: chat.lastMessageAt,
         isPinned: chat.isPinned,

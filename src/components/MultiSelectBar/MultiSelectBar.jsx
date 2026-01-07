@@ -5,8 +5,6 @@ import styles from "./MultiSelectBar.module.css";
 export default function MultiSelectBar({
   selectedCount,
   onDelete,
-  onForward,
-  onTag,
   onClear,
 }) {
   return (
@@ -15,12 +13,6 @@ export default function MultiSelectBar({
         {selectedCount} {selectedCount === 1 ? "message" : "messages"} selected
       </div>
       <div className={styles.actions}>
-        <button className={styles.actionButton} onClick={onForward}>
-          Forward
-        </button>
-        <button className={styles.actionButton} onClick={onTag}>
-          Tag
-        </button>
         <button className={`${styles.actionButton} ${styles.delete}`} onClick={onDelete}>
           Delete
         </button>

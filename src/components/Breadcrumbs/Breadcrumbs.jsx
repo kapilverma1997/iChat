@@ -41,14 +41,14 @@ export default function Breadcrumbs({ items }) {
 
 function generateBreadcrumbs(pathname, lang) {
   const paths = pathname.split("/").filter(Boolean);
-  const breadcrumbs = [
-    { label: getTranslation(lang, "home"), href: "/dashboard" },
-  ];
+  const breadcrumbs = [{ label: getTranslation(lang, "home"), href: "/chats" }];
 
   let currentPath = "";
   paths.forEach((path, index) => {
     currentPath += `/${path}`;
-    const label = getTranslation(lang, path) || path.charAt(0).toUpperCase() + path.slice(1);
+    const label =
+      getTranslation(lang, path) ||
+      path.charAt(0).toUpperCase() + path.slice(1);
     breadcrumbs.push({
       label,
       href: currentPath,
@@ -57,4 +57,3 @@ function generateBreadcrumbs(pathname, lang) {
 
   return breadcrumbs;
 }
-

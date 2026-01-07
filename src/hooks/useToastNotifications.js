@@ -63,6 +63,17 @@ export function useToastNotifications() {
         }
       }
 
+      // Don't show toast if user is viewing the same group
+      if (notification.groupId) {
+        const notificationGroupId = notification.groupId?.toString();
+        // Check if we're on the groups page and might be viewing this group
+        // We can use sessionStorage to track the active group (set by groups page)
+        const activeGroupId = sessionStorage.getItem('activeGroupId');
+        if (activeGroupId && notificationGroupId && activeGroupId === notificationGroupId) {
+          return;
+        }
+      }
+
       // Use messageId if available for consistent ID tracking
       const messageId = notification.messageId?.toString() || notification._id?.toString();
       const toastId = messageId || `notification-${Date.now()}-${Math.random()}`;
@@ -94,7 +105,6 @@ export function useToastNotifications() {
     // Listen for new messages (for real-time toast notifications)
     // Only show toast if notification:new wasn't already triggered for this message
     const handleNewMessage = (data) => {
-      console.log("useToastNotifications: Received message:new event", data);
       const { message, notification, chatId } = data;
       if (!message) {
         console.log("useToastNotifications: No message in data, returning");
@@ -145,8 +155,6 @@ export function useToastNotifications() {
         processedMessageIdsRef.current.add(messageId);
       }
 
-      console.log("useToastNotifications: Showing toast for new message", { senderName, messageChatId });
-
       // Use message ID for consistent duplicate prevention (same format as notification:new)
       addToast({
         id: messageId || `message-${Date.now()}-${Math.random()}`,
@@ -196,14 +204,247 @@ export function useToastNotifications() {
       });
     };
 
+    // Handle group messages
+    const handleGroupMessage = (data) => {
+      console.log("useToastNotifications: Received group:message event", data);
+      const { groupMessage, groupId } = data;
+
+      if (!groupMessage) {
+        console.log("useToastNotifications: No groupMessage in data, returning");
+        return;
+      }
+
+      const messageId = groupMessage._id?.toString();
+
+      // Skip if this message was already processed via notification:new
+      if (messageId && processedMessageIdsRef.current.has(messageId)) {
+        console.log("useToastNotifications: Group message already processed via notification:new, skipping");
+        return;
+      }
+
+      // Skip if this is the current user's own message
+      const senderId = groupMessage.senderId?._id?.toString() || groupMessage.senderId?.toString();
+      if (senderId && currentUserId && senderId === currentUserId) {
+        console.log("useToastNotifications: Skipping toast for own group message");
+        return;
+      }
+
+      // Get sender name
+      const senderName = groupMessage.senderId?.name ||
+        groupMessage.senderId?.email ||
+        'Someone';
+
+      // Get message content based on type
+      let messageContent = '';
+      if (groupMessage.type === 'poll') {
+        messageContent = 'Created a poll';
+      } else if (groupMessage.type === 'event') {
+        messageContent = 'Created an event';
+      } else if (groupMessage.type === 'file' || groupMessage.type === 'image' || groupMessage.type === 'video') {
+        messageContent = groupMessage.fileName || `Sent a ${groupMessage.type}`;
+      } else {
+        messageContent = groupMessage.content || 'Sent a message';
+      }
+
+      // Check if user is currently viewing this group
+      // Use sessionStorage to track the active group (set by groups page)
+      const activeGroupId = sessionStorage.getItem('activeGroupId');
+      if (activeGroupId && groupId && activeGroupId === groupId.toString()) {
+        console.log("useToastNotifications: User is viewing this group, skipping toast");
+        return;
+      }
+
+      // Mark as processed
+      if (messageId) {
+        processedMessageIdsRef.current.add(messageId);
+      }
+
+      console.log("useToastNotifications: Showing toast for new group message", { senderName, groupId });
+
+      // Determine toast type based on message type
+      let toastType = 'message';
+      if (groupMessage.type === 'poll') {
+        toastType = 'default';
+      } else if (groupMessage.type === 'event') {
+        toastType = 'default';
+      }
+
+      addToast({
+        id: messageId || `group-message-${Date.now()}-${Math.random()}`,
+        type: toastType,
+        title: `New message in group from ${senderName}`,
+        body: messageContent.length > 100
+          ? messageContent.substring(0, 100) + '...'
+          : messageContent,
+        duration: 5000,
+        playSound: true,
+        onClick: () => {
+          // Store the groupId in sessionStorage so the groups page can select it
+          if (groupId) {
+            sessionStorage.setItem('activeGroupId', groupId.toString());
+          }
+          router.push(`/groups`);
+        },
+        groupMessage,
+        groupId,
+      });
+    };
+
+    // Handle group thread messages
+    const handleGroupThreadMessage = (data) => {
+      console.log("useToastNotifications: Received group:threadMessage event", data);
+      const { threadMessage, groupId } = data;
+
+      if (!threadMessage) return;
+
+      const messageId = threadMessage._id?.toString();
+
+      // Skip if already processed
+      if (messageId && processedMessageIdsRef.current.has(messageId)) {
+        return;
+      }
+
+      // Skip if own message
+      const senderId = threadMessage.senderId?._id?.toString() || threadMessage.senderId?.toString();
+      if (senderId && currentUserId && senderId === currentUserId) {
+        return;
+      }
+
+      const senderName = threadMessage.senderId?.name ||
+        threadMessage.senderId?.email ||
+        'Someone';
+
+      if (messageId) {
+        processedMessageIdsRef.current.add(messageId);
+      }
+
+      addToast({
+        id: messageId || `group-thread-${Date.now()}-${Math.random()}`,
+        type: 'reply',
+        title: `${senderName} replied in group thread`,
+        body: threadMessage.content?.length > 100
+          ? threadMessage.content.substring(0, 100) + '...'
+          : threadMessage.content || 'Replied to a message',
+        duration: 5000,
+        playSound: true,
+        onClick: () => {
+          // Store the groupId in sessionStorage so the groups page can select it
+          if (groupId) {
+            sessionStorage.setItem('activeGroupId', groupId.toString());
+          }
+          router.push(`/groups`);
+        },
+        threadMessage,
+        groupId,
+      });
+    };
+
+    // Handle group poll creation
+    const handleGroupPollCreate = (data) => {
+      console.log("useToastNotifications: Received group:pollCreate event", data);
+      const { pollMessage, poll, groupId } = data;
+
+      if (!pollMessage || !poll) return;
+
+      const messageId = pollMessage._id?.toString();
+
+      // Skip if already processed
+      if (messageId && processedMessageIdsRef.current.has(messageId)) {
+        return;
+      }
+
+      // Skip if own poll
+      const senderId = pollMessage.senderId?._id?.toString() || pollMessage.senderId?.toString();
+      if (senderId && currentUserId && senderId === currentUserId) {
+        return;
+      }
+
+      const senderName = pollMessage.senderId?.name ||
+        pollMessage.senderId?.email ||
+        'Someone';
+
+      if (messageId) {
+        processedMessageIdsRef.current.add(messageId);
+      }
+
+      addToast({
+        id: messageId || `group-poll-${Date.now()}-${Math.random()}`,
+        type: 'default',
+        title: `${senderName} created a poll in group`,
+        body: poll.question || 'New poll created',
+        duration: 6000,
+        playSound: true,
+        onClick: () => {
+          // Store the groupId in sessionStorage so the groups page can select it
+          if (groupId) {
+            sessionStorage.setItem('activeGroupId', groupId.toString());
+          }
+          router.push(`/groups`);
+        },
+        poll,
+        groupId,
+      });
+    };
+
+    // Handle group event creation
+    const handleGroupEventCreate = (data) => {
+      console.log("useToastNotifications: Received group:eventCreate event", data);
+      const { eventMessage, event, groupId } = data;
+
+      if (!eventMessage || !event) return;
+
+      const messageId = eventMessage._id?.toString();
+
+      // Skip if already processed
+      if (messageId && processedMessageIdsRef.current.has(messageId)) {
+        return;
+      }
+
+      // Skip if own event
+      const senderId = eventMessage.senderId?._id?.toString() || eventMessage.senderId?.toString();
+      if (senderId && currentUserId && senderId === currentUserId) {
+        return;
+      }
+
+      const senderName = eventMessage.senderId?.name ||
+        eventMessage.senderId?.email ||
+        'Someone';
+
+      if (messageId) {
+        processedMessageIdsRef.current.add(messageId);
+      }
+
+      addToast({
+        id: messageId || `group-event-${Date.now()}-${Math.random()}`,
+        type: 'default',
+        title: `${senderName} created an event in group`,
+        body: event.title || 'New event created',
+        duration: 6000,
+        playSound: true,
+        onClick: () => {
+          // Store the groupId in sessionStorage so the groups page can select it
+          if (groupId) {
+            sessionStorage.setItem('activeGroupId', groupId.toString());
+          }
+          router.push(`/groups`);
+        },
+        event,
+        groupId,
+      });
+    };
+
     // Register event listeners - listen to both event names
     // Socket.io supports multiple listeners for the same event, so we don't need to remove others
-    console.log("useToastNotifications: Registering event listeners for 'notification:new', 'message:new', and 'receiveMessage'");
+    console.log("useToastNotifications: Registering event listeners for 'notification:new', 'message:new', 'receiveMessage', and group events");
 
     // Register listeners - these will be called along with any other listeners for the same events
     socket.on('notification:new', handleNotification);
     socket.on('message:new', handleNewMessage);
     socket.on('receiveMessage', handleReceiveMessage);
+    socket.on('group:message', handleGroupMessage);
+    socket.on('group:threadMessage', handleGroupThreadMessage);
+    socket.on('group:pollCreate', handleGroupPollCreate);
+    socket.on('group:eventCreate', handleGroupEventCreate);
 
     console.log("useToastNotifications: Event listeners registered successfully", {
       socketId: socket.id,
@@ -212,8 +453,8 @@ export function useToastNotifications() {
 
     // Debug: Log all socket events to see what's being received
     const debugHandler = (eventName, ...args) => {
-      if (eventName === 'message:new' || eventName === 'notification:new' || eventName === 'receiveMessage') {
-        console.log(`useToastNotifications: Socket event received via onAny: ${eventName}`, args);
+      if (eventName === 'message:new' || eventName === 'notification:new' || eventName === 'receiveMessage' ||
+        eventName === 'group:message' || eventName === 'group:threadMessage' || eventName === 'group:pollCreate' || eventName === 'group:eventCreate') {
       }
     };
 
@@ -229,6 +470,10 @@ export function useToastNotifications() {
       socket.off('notification:new', handleNotification);
       socket.off('message:new', handleNewMessage);
       socket.off('receiveMessage', handleReceiveMessage);
+      socket.off('group:message', handleGroupMessage);
+      socket.off('group:threadMessage', handleGroupThreadMessage);
+      socket.off('group:pollCreate', handleGroupPollCreate);
+      socket.off('group:eventCreate', handleGroupEventCreate);
       if (socket.offAny) {
         socket.offAny(debugHandler);
       }

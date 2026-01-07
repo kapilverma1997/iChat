@@ -149,6 +149,12 @@ const GroupSchema = new Schema(
       type: Date,
       default: Date.now,
     },
+    inviteToken: {
+      type: String,
+      default: null,
+      unique: true,
+      sparse: true,
+    },
   },
   {
     timestamps: true,
@@ -161,6 +167,7 @@ GroupSchema.index({ groupType: 1 });
 GroupSchema.index({ createdBy: 1 });
 GroupSchema.index({ lastMessageAt: -1 });
 GroupSchema.index({ name: 'text', description: 'text' });
+GroupSchema.index({ inviteToken: 1 });
 
 const Group = mongoose.models.Group || mongoose.model('Group', GroupSchema);
 

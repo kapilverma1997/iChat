@@ -1,11 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import React from "react";
 import Modal from "../Modal/Modal.jsx";
 import InputBox from "../InputBox/InputBox.jsx";
 import Button from "../Button/Button.jsx";
 import { hasPermission } from "../../../lib/groupPermissions.js";
 import styles from "./GroupSettingsPanel.module.css";
+
+const getTranslation = (key) => {
+  const translations = {
+    inviteLink: "Invite to Group via Link",
+    inviteLinkDescription: "Share this link to invite others to join your group",
+    copyLink: "Copy Link",
+    resetLink: "Reset Link",
+    sendLink: "Send Link",
+    linkCopied: "Link copied to clipboard!",
+    linkReset: "Link reset successfully!",
+    linkSent: "Link sent to group!",
+    noPermission: "You do not have permission to manage invite links",
+  };
+  return translations[key] || key;
+};
 
 export default function GroupSettingsPanel({
   group,
@@ -35,8 +51,207 @@ export default function GroupSettingsPanel({
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState(group.groupPhoto || "");
+  const fileInputRef = React.useRef(null);
+  const [inviteLink, setInviteLink] = useState("");
+  const [loadingInviteLink, setLoadingInviteLink] = useState(false);
+  const [inviteLinkError, setInviteLinkError] = useState("");
+
+  // Update photo preview when group changes
+  useEffect(() => {
+    setPhotoPreview(group.groupPhoto || "");
+    setFormData((prev) => ({
+      ...prev,
+      groupPhoto: group.groupPhoto || "",
+    }));
+  }, [group.groupPhoto]);
 
   const canChangeInfo = hasPermission(userRole, "canChangeGroupInfo");
+  const canAddMembers = hasPermission(userRole, "canAddMembers");
+
+  const handlePhotoUpload = async (file) => {
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setError("Please select an image file");
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setError("Image size must be less than 10MB");
+      return;
+    }
+
+    setUploadingPhoto(true);
+    setError("");
+
+    try {
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+
+      // Upload file
+      const token = localStorage.getItem("accessToken");
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(`/api/groups/${group._id}/photo`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to upload photo");
+      }
+
+      // Update formData with the new photo URL
+      setFormData((prev) => ({
+        ...prev,
+        groupPhoto: data.photoUrl,
+      }));
+      setPhotoPreview(data.photoUrl);
+    } catch (err) {
+      setError(err.message);
+      setPhotoPreview(group.groupPhoto || "");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handlePhotoUpload(file);
+    }
+  };
+
+  const handlePhotoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Fetch invite link
+  const fetchInviteLink = async () => {
+    if (!canAddMembers) return;
+    
+    setLoadingInviteLink(true);
+    setInviteLinkError("");
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(`/api/groups/${group._id}/invite-link`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to fetch invite link");
+      }
+
+      setInviteLink(data.inviteLink);
+    } catch (err) {
+      setInviteLinkError(err.message);
+    } finally {
+      setLoadingInviteLink(false);
+    }
+  };
+
+  // Load invite link when component mounts
+  useEffect(() => {
+    if (canAddMembers) {
+      fetchInviteLink();
+    }
+  }, [group._id, canAddMembers]);
+
+  // Copy invite link
+  const handleCopyLink = async () => {
+    if (!inviteLink) {
+      await fetchInviteLink();
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      // Show success message (you can use a toast notification here)
+      alert(getTranslation("linkCopied"));
+    } catch (err) {
+      setInviteLinkError("Failed to copy link");
+    }
+  };
+
+  // Reset invite link
+  const handleResetLink = async () => {
+    setLoadingInviteLink(true);
+    setInviteLinkError("");
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(`/api/groups/${group._id}/invite-link`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to reset invite link");
+      }
+
+      setInviteLink(data.inviteLink);
+      alert(getTranslation("linkReset"));
+    } catch (err) {
+      setInviteLinkError(err.message);
+    } finally {
+      setLoadingInviteLink(false);
+    }
+  };
+
+  // Send invite link to group
+  const handleSendLink = async () => {
+    if (!inviteLink) {
+      await fetchInviteLink();
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("accessToken");
+      const messageContent = `Join this group using this link: ${inviteLink}`;
+      
+      const response = await fetch(`/api/groups/messages/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          groupId: group._id,
+          content: messageContent,
+          type: "text",
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send link");
+      }
+
+      alert(getTranslation("linkSent"));
+      onRefresh(); // Refresh to show the new message
+    } catch (err) {
+      setInviteLinkError(err.message);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -169,19 +384,47 @@ export default function GroupSettingsPanel({
                     </div>
 
                     <div className={styles.field}>
-                      <label htmlFor="groupPhoto">Group Photo URL</label>
-                      <InputBox
-                        id="groupPhoto"
-                        type="url"
-                        value={formData.groupPhoto}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            groupPhoto: e.target.value,
-                          })
-                        }
-                        disabled={loading}
-                      />
+                      <label htmlFor="groupPhoto">Group Photo</label>
+                      <div className={styles.photoUploadContainer}>
+                        <div
+                          className={styles.photoPreview}
+                          onClick={handlePhotoClick}
+                          style={{
+                            cursor: canChangeInfo ? "pointer" : "default",
+                          }}
+                        >
+                          {photoPreview ? (
+                            <img
+                              src={photoPreview}
+                              alt="Group photo preview"
+                              className={styles.photoImage}
+                            />
+                          ) : (
+                            <div className={styles.photoPlaceholder}>
+                              <span>📷</span>
+                              <span>Click to upload</span>
+                            </div>
+                          )}
+                          {uploadingPhoto && (
+                            <div className={styles.uploadingOverlay}>
+                              <div className={styles.spinner}></div>
+                            </div>
+                          )}
+                          {canChangeInfo && !uploadingPhoto && (
+                            <div className={styles.photoOverlay}>
+                              <span>Change Photo</span>
+                            </div>
+                          )}
+                        </div>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className={styles.fileInput}
+                          disabled={loading || uploadingPhoto || !canChangeInfo}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -310,6 +553,70 @@ export default function GroupSettingsPanel({
                 </div>
               </div>
             </div>
+
+            {/* Invite Link Section */}
+            {canAddMembers && (
+              <div className={styles.section} style={{ marginTop: "1rem" }}>
+                <h3 className={styles.sectionTitle}>
+                  <span className={styles.icon}>🔗</span>
+                  {getTranslation("inviteLink")}
+                </h3>
+                <div className={styles.fieldsContainer}>
+                  <div className={styles.field}>
+                    <label>{getTranslation("inviteLinkDescription")}</label>
+                    <div className={styles.inviteLinkContainer}>
+                      <InputBox
+                        type="text"
+                        value={inviteLink}
+                        readOnly
+                        onChange={() => {}} // Empty handler for read-only controlled input
+                        disabled={loadingInviteLink}
+                        className={styles.inviteLinkInput}
+                      />
+                      <div className={styles.inviteLinkActions}>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={handleCopyLink}
+                          disabled={loadingInviteLink || !inviteLink}
+                          className={styles.inviteLinkButton}
+                        >
+                          {getTranslation("copyLink")}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={handleResetLink}
+                          disabled={loadingInviteLink}
+                          className={styles.inviteLinkButton}
+                        >
+                          {getTranslation("resetLink")}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="primary"
+                          onClick={handleSendLink}
+                          disabled={loadingInviteLink || !inviteLink}
+                          className={styles.inviteLinkButton}
+                        >
+                          {getTranslation("sendLink")}
+                        </Button>
+                      </div>
+                    </div>
+                    {inviteLinkError && (
+                      <div className={styles.error} style={{ marginTop: "0.5rem", fontSize: "0.75rem" }}>
+                        {inviteLinkError}
+                      </div>
+                    )}
+                    {loadingInviteLink && (
+                      <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "#64748b" }}>
+                        Loading...
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
